@@ -127,6 +127,8 @@ window.DataStore.onReady(function () {
     return `<span class="status-badge" style="--st:${s.color}"><span class="status-dot"></span>${s.label}</span>`;
   };
   const isActive = (o) => o.status !== 'cancelado';
+  // Conta como venda só o que foi fechado: orçamento "Pendente" ainda não é venda
+  const isClosed = (o) => o.status !== 'cancelado' && o.status !== 'pendente';
 
   // ===== DASHBOARD =====
   let dashPeriod = 'month';
@@ -226,8 +228,8 @@ window.DataStore.onReady(function () {
     // Conjuntos filtrados
     const cur = (dashPeriod === 'all') ? orders.slice() : orders.filter(o => inRange(o, start, end));
     const prev = (dashPeriod === 'all') ? [] : orders.filter(o => inRange(o, prevStart, prevEnd));
-    const curActive = cur.filter(isActive);
-    const prevActive = prev.filter(isActive);
+    const curActive = cur.filter(isClosed);
+    const prevActive = prev.filter(isClosed);
 
     const sum = (arr, fn) => arr.reduce((s, o) => s + (fn(o) || 0), 0);
     const revenue = sum(curActive, o => o.total);
@@ -239,8 +241,8 @@ window.DataStore.onReady(function () {
     const avg = count ? revenue / count : 0;
     const prevAvg = prevCount ? prevRevenue / prevCount : 0;
     // A receber: snapshot de todos os pedidos ativos não quitados
-    const pending = orders.filter(isActive).reduce((s, o) => s + Math.max(0, (o.total || 0) - (o.valorPago || 0)), 0);
-    const futureCount = orders.filter(o => isActive(o) && o.eventDate && o.eventDate >= todayIso).length;
+    const pending = orders.filter(isClosed).reduce((s, o) => s + Math.max(0, (o.total || 0) - (o.valorPago || 0)), 0);
+    const futureCount = orders.filter(o => isClosed(o) && o.eventDate && o.eventDate >= todayIso).length;
 
     // Séries para sparklines
     const revSeries = bucketSeries(curActive, start, end, o => o.total);
@@ -253,7 +255,9 @@ window.DataStore.onReady(function () {
       { label: 'A receber', icon: 'hourglass', tone: 'gold', val: pending, fmt: 'brl', snapshot: true },
       { label: 'Ticket médio', icon: 'bar-chart-3', tone: 'gold', val: avg, prev: prevAvg, fmt: 'brl' },
       { label: 'Contratos', icon: 'file-check', tone: '', val: count, prev: prevCount, fmt: 'int', spark: countSeries, sc: 'var(--rose)' },
-      { label: 'Eventos futuros', icon: 'calendar-clock', tone: 'green', val: futureCount, fmt: 'int', snapshot: true }
+      { label: 'Eventos futuros', icon: 'calendar-clock', tone: 'green', val: futureCount, fmt: 'int', snapshot: true },
+      { label: 'Orçamentos recebidos', icon: 'inbox', tone: '', val: cur.length, prev: prev.length, fmt: 'int' },
+      { label: 'Taxa de fechamento', icon: 'target', tone: 'gold', val: cur.length ? Math.round(count / cur.length * 100) : 0, fmt: 'pct', snapshot: true }
     ];
 
     const kpiRoot = $('#dashKpis');
@@ -270,7 +274,7 @@ window.DataStore.onReady(function () {
     `).join('');
     kpiRoot.querySelectorAll('.stat-card-num').forEach(el => {
       const to = Number(el.dataset.to) || 0;
-      const fmt = el.dataset.fmt === 'brl' ? formatBRL : (n => String(Math.round(n)));
+      const fmt = el.dataset.fmt === 'brl' ? formatBRL : (el.dataset.fmt === 'pct' ? (n => Math.round(n) + '%') : (n => String(Math.round(n))));
       animateNum(el, to, fmt);
     });
 
@@ -326,7 +330,7 @@ window.DataStore.onReady(function () {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       months.push({ y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleDateString('pt-BR', { month: 'short' }), total: 0 });
     }
-    orders.filter(isActive).forEach(o => {
+    orders.filter(isClosed).forEach(o => {
       const d = new Date(o.createdAt);
       const b = months.find(x => x.y === d.getFullYear() && x.m === d.getMonth());
       if (b) b.total += (o.total || 0);
