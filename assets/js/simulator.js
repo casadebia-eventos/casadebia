@@ -216,6 +216,7 @@
     const updateGuestUI = () => {
       if (guestInput) guestInput.value = state.guests || 0;
       if (guestMinus) guestMinus.disabled = state.guests <= 0;
+      if (guestPlus) guestPlus.disabled = state.guests >= maxGuests();
 
       // A frase abaixo do título só faz sentido no Básico (regra de R$ 15 por excedente).
       // Nos demais pacotes (Essencial, Premium, Pro Max) ela é ocultada.
@@ -231,6 +232,7 @@
           const cost = extra * pkg.extraPerGuest;
           guestInfo.innerHTML = `<i data-lucide="info"></i><span>Pacote inclui ${pkg.capacity} pessoas. <strong>+${extra} excedente${extra > 1 ? 's' : ''} = ${window.SIM.formatBRL(cost)}</strong></span>`;
           guestInfo.style.display = '';
+          guestInfo.classList.remove('error');
         } else if (state.guests > pkg.capacity) {
           guestInfo.innerHTML = `<i data-lucide="alert-triangle"></i><span>Acima da capacidade do pacote (${pkg.capacity} pessoas).</span>`;
           guestInfo.style.display = '';
@@ -246,8 +248,30 @@
       }
     };
 
+    // Capacidade máxima do espaço = maior capacidade entre os pacotes (editável no painel)
+    const maxGuests = () => {
+      const caps = Object.values(window.SIM_PRICING.packages || {}).map(p => Number(p.capacity) || 0);
+      return Math.max(1, ...caps);
+    };
+    if (guestInput) guestInput.max = maxGuests();
+
     const setGuests = (n) => {
-      state.guests = Math.max(0, Math.min(500, parseInt(n, 10) || 0));
+      const max = maxGuests();
+      const wanted = parseInt(n, 10) || 0;
+      state.guests = Math.max(0, Math.min(max, wanted));
+      if (wanted > max && guestInput) {
+        guestInput.value = max;
+        if (guestInfo) {
+          guestInfo.innerHTML = `<i data-lucide="alert-triangle"></i><span>A capacidade máxima do espaço é de ${max} pessoas.</span>`;
+          guestInfo.style.display = '';
+          guestInfo.classList.add('error');
+          if (window.lucide) window.lucide.createIcons();
+        }
+        window.SIM.save(state);
+        renderBudget();
+        if (guestPlus) guestPlus.disabled = true;
+        return;
+      }
       window.SIM.save(state);
       updateGuestUI();
       renderBudget();
@@ -384,9 +408,20 @@
       `;}).join('');
 
       decoCombosGrid.querySelectorAll('.deco-combo').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (ev) => {
           const combo = filtered.find(x => x.id === btn.dataset.combo);
           if (!combo) return;
+          // Clicar no card escolhe o combo; "Ver detalhes" abre as fotos e a descrição
+          if (!ev.target.closest('.deco-combo-view')) {
+            state.decoration.combo = combo.id;
+            window.SIM.save(state);
+            renderDecorationCombos();
+            renderDecorationVisibility();
+            renderBalloons();
+            renderDecorationSummary();
+            renderBudget();
+            return;
+          }
           const imgs = (combo.images && combo.images.length) ? combo.images : (combo.image ? [combo.image] : []);
           const descFull = (combo.description || '') + (combo.items?.length ? '\n\nInclui:\n• ' + combo.items.join('\n• ') : '');
           openDetailModal({
@@ -426,9 +461,19 @@
         </button>
       `).join('');
       decoBalloonsGrid.querySelectorAll('.balloon-card').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (ev) => {
           const bal = balloons.find(b => b.id === card.dataset.balloon);
-          if (bal) openDetailModal({
+          if (!bal) return;
+          // Clicar no card marca/desmarca o balão; "Ver detalhes" abre as fotos
+          if (!ev.target.closest('.balloon-card-view')) {
+            state.decoration.balloon = (state.decoration.balloon === bal.id) ? null : bal.id;
+            window.SIM.save(state);
+            renderBalloons();
+            renderDecorationSummary();
+            renderBudget();
+            return;
+          }
+          openDetailModal({
             kind: 'balloon',
             id: bal.id,
             title: bal.name,
@@ -1198,13 +1243,19 @@
 
       // Pacote e convidados
       if (PK) {
-        sections.push({
-          title: 'Pacote e convidados',
-          rows: [
-            { label: 'Pacote', sub: `Até ${PK.capacity} pessoas`, value: window.SIM.formatBRL(PK.price), strongLabel: PK.name },
-            { label: 'Convidados estimados', value: `${state.guests || 0} pessoa${state.guests !== 1 ? 's' : ''}` }
-          ]
-        });
+        const rows = [
+          { label: 'Pacote', sub: `Até ${PK.capacity} pessoas`, value: window.SIM.formatBRL(PK.price), strongLabel: PK.name },
+          { label: 'Convidados estimados', value: `${state.guests || 0} pessoa${state.guests !== 1 ? 's' : ''}` }
+        ];
+        if (state.guests > PK.capacity && PK.extraPerGuest > 0) {
+          const extra = state.guests - PK.capacity;
+          rows.push({
+            label: `Convidados excedentes (${extra})`,
+            sub: `${window.SIM.formatBRL(PK.extraPerGuest)} × ${extra} pessoa${extra > 1 ? 's' : ''}`,
+            value: window.SIM.formatBRL(extra * PK.extraPerGuest)
+          });
+        }
+        sections.push({ title: 'Pacote e convidados', rows });
       }
 
       // Gás (se aplicável)
@@ -1302,7 +1353,7 @@
         sections.push({
           title: 'Seus dados',
           rows: [
-            { label: 'Nome', value: state.customer?.name || '—', strongLabel: state.customer?.name },
+            { label: 'Nome', value: state.customer?.name || '—' },
             { label: 'WhatsApp', value: formatWhatsapp(state.customer?.whatsapp || '') }
           ]
         });
@@ -1368,11 +1419,11 @@
       const SEP = '━━━━━━━━━━━━━━━';
 
       const lines = [];
-      lines.push('🎉 *Seu evento está quase pronto!*');
-      lines.push('Confira o resumo da sua solicitação na Casa de Bia ✨');
+      lines.push('Olá, Casa de Bia! 🎉');
+      lines.push('Montei meu evento pelo site e gostaria de confirmar a data e o orçamento:');
       lines.push('');
 
-      if (state.customer?.name) lines.push(`👤 *Cliente:* ${state.customer.name}`);
+      if (state.customer?.name) lines.push(`👤 *Nome:* ${state.customer.name}`);
       if (state.customer?.whatsapp) lines.push(`📱 *WhatsApp:* ${formatWhatsapp(state.customer.whatsapp)}`);
       if (state.date) lines.push(`📅 *Evento:* ${formatDateLong(state.date)}`);
 
@@ -1380,9 +1431,12 @@
 
       // PACOTE
       if (PK) {
-        const guestLabel = state.guests > 0 ? state.guests : PK.capacity;
-        lines.push(`🎈 *Pacote ${PK.name}*`);
-        lines.push(`Até ${guestLabel} pessoas — ${fmt(PK.price)}`);
+        lines.push(`🎈 *Pacote ${PK.name}* — ${fmt(PK.price)}`);
+        if (state.guests > 0) {
+          lines.push(`${state.guests} convidados (pacote inclui até ${PK.capacity})`);
+        } else {
+          lines.push(`Pacote para até ${PK.capacity} pessoas`);
+        }
         if (state.guests > PK.capacity && PK.extraPerGuest > 0) {
           const extra = state.guests - PK.capacity;
           lines.push(`+${extra} convidado${extra > 1 ? 's' : ''} excedente${extra > 1 ? 's' : ''} — ${fmt(extra * PK.extraPerGuest)}`);
@@ -1489,7 +1543,7 @@
         lines.push(`🔥 *Gás incluso no pacote* ✓`);
         lines.push('');
       } else if (state.gas === true) {
-        lines.push(`🔥 *Gás incluso* — ${fmt(gasPrice)}`);
+        lines.push(`🔥 *Uso de gás* — ${fmt(gasPrice)}`);
         lines.push('');
       }
 
@@ -1497,8 +1551,7 @@
       lines.push(`💰 *Valor total estimado:*`);
       lines.push(`*${fmt(total)}*`);
       lines.push('');
-      lines.push('Seu evento já começou a ganhar forma por aqui ✨');
-      lines.push('Já já entraremos em contato para alinhar todos os detalhes! ☺️');
+      lines.push('Pode me confirmar a disponibilidade e como faço o pagamento? 😊');
 
       // Remove possíveis linhas em branco duplicadas
       return lines.join('\n').replace(/\n{3,}/g, '\n\n');
