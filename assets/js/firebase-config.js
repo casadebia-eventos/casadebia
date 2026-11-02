@@ -12,12 +12,12 @@
 window.FIREBASE_CONFIG = {
   // ⚠️ Mantenha "PLACEHOLDER" para usar localStorage local.
   // Substitua pelos valores reais para ativar sincronização em nuvem.
-  apiKey: "PLACEHOLDER",
-  authDomain: "PLACEHOLDER",
-  projectId: "PLACEHOLDER",
-  storageBucket: "PLACEHOLDER",
-  messagingSenderId: "PLACEHOLDER",
-  appId: "PLACEHOLDER"
+  apiKey: "AIzaSyAv5dVxDUus8exzLQY8qEgY1icVWZKRGDA",
+  authDomain: "casa-de-bia.firebaseapp.com",
+  projectId: "casa-de-bia",
+  storageBucket: "casa-de-bia.firebasestorage.app",
+  messagingSenderId: "923596412808",
+  appId: "1:923596412808:web:b0751c2504f1e3c4c9cc3d"
 };
 
 // Detecta se o Firebase foi configurado (não está em placeholder)
