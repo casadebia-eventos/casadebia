@@ -2,7 +2,7 @@
    CASA DE BIA — Simulador: Controlador da UI
    ============================================ */
 (function () {
-  document.addEventListener('DOMContentLoaded', () => {
+  window.DataStore.onReady(() => {
     let state = window.SIM.load();
 
     // Pré-seleção via ?pkg=...

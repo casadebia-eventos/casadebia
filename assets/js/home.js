@@ -66,4 +66,24 @@
     revealEls.forEach(el => io.observe(el));
     stats.forEach(el => io.observe(el));
   });
+
+  // ===== PREÇOS DOS PACOTES NA HOME (vêm do painel) =====
+  window.DataStore.onReady(() => {
+    const pkgs = window.SIM_PRICING?.packages || {};
+    const fmt = (n) => {
+      const num = Number(n) || 0;
+      const cents = Math.abs(num - Math.round(num)) > 0.001;
+      return num.toLocaleString('pt-BR', { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: 2 });
+    };
+    document.querySelectorAll('.pkg').forEach(card => {
+      const link = card.querySelector('a[href*="pkg="]');
+      const id = link && new URL(link.getAttribute('href'), location.href).searchParams.get('pkg');
+      const pk = id && pkgs[id];
+      if (!pk) return;
+      const priceEl = card.querySelector('.pkg-price-num');
+      if (priceEl) priceEl.textContent = fmt(pk.price);
+      const nameEl = card.querySelector('.pkg-name');
+      if (nameEl && pk.name) nameEl.textContent = pk.name;
+    });
+  });
 })();

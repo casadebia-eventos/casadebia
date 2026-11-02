@@ -2,7 +2,7 @@
    CASA DE BIA — Galeria com filtro + lightbox
    ============================================ */
 (function () {
-  document.addEventListener('DOMContentLoaded', () => {
+  window.DataStore.onReady(() => {
     const filters = document.querySelectorAll('.gallery-filter');
     const items = Array.from(document.querySelectorAll('.gallery-item'));
     const grid = document.querySelector('.gallery-grid');

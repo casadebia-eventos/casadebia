@@ -1,7 +1,7 @@
 /* ============================================
    CASA DE BIA — Admin Controller
    ============================================ */
-(function () {
+window.DataStore.onReady(function () {
   // ===== AUTH GUARD =====
   if (!window.DataStore.isLoggedIn()) {
     window.location.href = 'admin-login.html';
@@ -111,8 +111,9 @@
   // Logout
   $('#btnLogout')?.addEventListener('click', () => {
     if (confirm('Sair do painel?')) {
-      window.DataStore.logout();
-      window.location.href = 'admin-login.html';
+      Promise.resolve(window.DataStore.logout()).finally(() => {
+        window.location.href = 'admin-login.html';
+      });
     }
   });
 
@@ -1138,7 +1139,16 @@
     data.config.includedDecorationImage = e.target.value.trim();
     persist();
   });
-  $('#btnChangePassword')?.addEventListener('click', () => {
+  $('#btnChangePassword')?.addEventListener('click', async () => {
+    if (window.DataStore.firebase) {
+      const cur = prompt('Senha atual:');
+      if (!cur) return;
+      const newPass = prompt('Nova senha (mínimo 6 caracteres):');
+      if (!newPass || newPass.length < 6) { toast('Senha muito curta', 'error'); return; }
+      const r = await window.DataStore.changeAdminPassword(cur, newPass);
+      toast(r.ok ? 'Senha alterada com sucesso' : r.message, r.ok ? 'success' : 'error');
+      return;
+    }
     const cur = prompt('Senha atual:');
     if (cur !== data.auth.password) { toast('Senha atual incorreta', 'error'); return; }
     const newPass = prompt('Nova senha (mínimo 6 caracteres):');
@@ -1721,8 +1731,12 @@
   $('#btnAddVideo')?.addEventListener('click', () => addMedia('video'));
 
   // ===== INIT =====
-  // Aviso de senha padrão
-  if (data.auth.password === 'casadebia123') {
+  // Avisa se a nuvem recusar alguma alteração
+  document.addEventListener('firebase:error', (e) => {
+    toast('⚠️ ' + (e.detail?.what || 'Falha ao salvar na nuvem'), 'error');
+  });
+  // Aviso de senha padrão (só no modo sem Firebase)
+  if (!window.DataStore.firebase && data.auth.password === 'casadebia123') {
     setTimeout(() => toast('⚠️ Senha padrão ativa — altere em Configurações', 'error'), 800);
   }
   // Atualiza link WhatsApp para sair com o numero atualizado
@@ -1730,4 +1744,4 @@
 
   applyProfile();
   renderDashboard();
-})();
+});

@@ -511,7 +511,19 @@
     logout,
     changePassword,
     STORAGE_KEY,
-    ORDERS_KEY
+    ORDERS_KEY,
+    NOTES_KEY,
+    BLOCKED_DATES_KEY,
+    // Promessa resolvida quando os dados estão prontos (o Firebase substitui
+    // por uma que espera a nuvem). Sem Firebase, fica pronta na hora.
+    readyPromise: Promise.resolve(),
+    // Roda fn quando a página E os dados estiverem prontos
+    onReady(fn) {
+      const domReady = document.readyState === 'loading'
+        ? new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }))
+        : Promise.resolve();
+      Promise.all([domReady, window.DataStore.readyPromise]).then(() => fn());
+    }
   };
 
   // Aplicação automática nas globais ao carregar

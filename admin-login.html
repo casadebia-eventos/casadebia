@@ -20,7 +20,7 @@
       <p class="lead">Acesso restrito à proprietária</p>
 
       <form class="login-form" id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email (apenas se Firebase ativo)" autocomplete="email" style="display:none;">
+        <input type="email" id="loginEmail" placeholder="Seu e-mail" autocomplete="email" style="display:none;">
         <input type="password" id="loginPassword" placeholder="Digite sua senha" autocomplete="current-password" required autofocus>
         <div class="login-error" id="loginError">Senha incorreta. Tente novamente.</div>
         <button type="submit" class="btn btn-primary btn-lg">
@@ -39,9 +39,10 @@
   <script src="assets/js/data-store.js"></script>
   <script src="assets/js/firebase-store.js"></script>
   <script>
-    if (window.DataStore.isLoggedIn()) {
-      window.location.href = 'admin.html';
-    }
+    // Se já estiver logado, vai direto para o painel
+    window.DataStore.onReady(() => {
+      if (window.DataStore.isLoggedIn()) window.location.href = 'admin.html';
+    });
     document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) window.lucide.createIcons();
       const form = document.getElementById('loginForm');
