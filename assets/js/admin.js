@@ -103,7 +103,7 @@ window.DataStore.onReady(function () {
     renderAvatar($('#sidebarAvatar'), p);
     renderAvatar($('#topbarAvatar'), p);
     const nameEl = $('#sidebarName');
-    if (nameEl) nameEl.textContent = 'Casa de Bia';
+    if (nameEl) nameEl.textContent = p.name || 'Bia';
     const greet = $('#dashGreeting');
     if (greet) greet.textContent = `Olá, ${p.name || 'Bia'} 👋`;
   }
@@ -398,7 +398,7 @@ window.DataStore.onReady(function () {
       type: 'bar',
       data: {
         labels: entries.map(([id]) => pkgs[id]?.name || id),
-        datasets: [{ data: entries.map(([, n]) => n), backgroundColor: 'rgba(212, 169, 66, 0.85)', hoverBackgroundColor: '#B58E2F', borderRadius: 8, maxBarThickness: 28 }]
+        datasets: [{ data: entries.map(([, n]) => n), backgroundColor: 'rgba(212, 169, 66, 0.85)', hoverBackgroundColor: '#A9782A', borderRadius: 8, maxBarThickness: 28 }]
       },
       options: {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
