@@ -73,7 +73,7 @@
         'Cozinha gourmet equipada',
         'Fogão industrial profissional',
         '2 freezers à disposição',
-        '10 mesas e 60 cadeiras + extras com locadora parceira',
+        'Estrutura completa para receber seus convidados',
         'Capacidade para até 200 pessoas',
         'Ponto de gás disponível'
       ]
@@ -87,7 +87,7 @@
       basico:    { id: 'basico',    name: 'Básico',    price: 299.90, capacity: 20,  extraPerGuest: 15, includesGas: false, includesDecoration: false, includesPhotographer: false,
         includedItems: ['Área coberta + banheiro + bar', 'Churrasqueira e choveirão', 'Caixa térmica para bebidas', '+R$ 15 por excedente'] },
       essencial: { id: 'essencial', name: 'Essencial', price: 590,    capacity: 120, extraPerGuest: 10, includesGas: false, includesDecoration: false, includesPhotographer: false,
-        includedItems: ['Tudo do Básico', 'Cozinha gourmet + fogão industrial', '2 freezers', '10 mesas e 60 cadeiras + extras com locadora parceira', '+R$ 10 por excedente'] },
+        includedItems: ['Tudo do Básico', 'Cozinha gourmet + fogão industrial', '2 freezers', 'Estrutura completa para receber seus convidados', '+R$ 10 por excedente'] },
       premium:   { id: 'premium',   name: 'Premium',   price: 899,    capacity: 150, extraPerGuest: 10, includesGas: true,  includesDecoration: true,  includesPhotographer: false,
         includedItems: ['Tudo do Essencial', 'Decoração kit painel (Pegue e Monte)', 'Pula-pula, piscina de bolinha e escorregador', 'Gás incluso', '+R$ 10 por excedente'] },
       promax:    { id: 'promax',    name: 'Pro Max',   price: 1590,   capacity: 200, extraPerGuest: 0,  includesGas: true,  includesDecoration: true,  includesPhotographer: true,
