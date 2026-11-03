@@ -1746,6 +1746,167 @@ window.DataStore.onReady(function () {
   $('#btnAddPhoto')?.addEventListener('click', () => addMedia('image'));
   $('#btnAddVideo')?.addEventListener('click', () => addMedia('video'));
 
+  // ===== ENVIO DE FOTOS (Cloudinary) =====
+  const cloudCfg = () => data.config.cloudinary || {};
+  const cloudReady = () => !!(cloudCfg().cloudName && cloudCfg().uploadPreset);
+  // Versão otimizada da foto: formato e qualidade automáticos, até 1920px
+  const optimizeUrl = (url) => String(url).replace('/image/upload/', '/image/upload/f_auto,q_auto,c_limit,w_1920/');
+  let widgetScript = null;
+  const loadWidget = () => widgetScript || (widgetScript = new Promise((res, rej) => {
+    if (window.cloudinary?.createUploadWidget) return res();
+    const s = document.createElement('script');
+    s.src = 'https://upload-widget.cloudinary.com/latest/global/all.js';
+    s.onload = res; s.onerror = () => { widgetScript = null; rej(new Error('widget')); };
+    document.head.appendChild(s);
+  }));
+  // Abre a janela de envio; chama onDone com a lista de links (na ordem enviada)
+  async function openUploader({ multiple = false, onDone }) {
+    if (!cloudReady()) {
+      toast('Configure o Cloudinary em Configurações primeiro', 'error');
+      return;
+    }
+    try { await loadWidget(); } catch { toast('Não foi possível abrir o envio de fotos', 'error'); return; }
+    const urls = [];
+    const w = window.cloudinary.createUploadWidget({
+      cloudName: cloudCfg().cloudName,
+      uploadPreset: cloudCfg().uploadPreset,
+      folder: 'casadebia',
+      sources: ['local', 'camera', 'url', 'google_drive'],
+      multiple,
+      maxFiles: multiple ? 30 : 1,
+      clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'],
+      maxFileSize: 20000000,
+      language: 'pt',
+      text: { pt: { menu: { files: 'Meus arquivos', camera: 'Câmera', url: 'Link', google_drive: 'Google Drive' },
+                    local: { browse: 'Escolher fotos', dd_title_single: 'Arraste a foto aqui', dd_title_multi: 'Arraste as fotos aqui' } } },
+      styles: { palette: { window: '#FFFFFF', windowBorder: '#A9782A', tabIcon: '#A9782A', menuIcons: '#2B2620',
+        textDark: '#0D0B09', textLight: '#FFFFFF', link: '#A9782A', action: '#A9782A', inactiveTabIcon: '#7A7064',
+        error: '#C0392B', inProgress: '#A9782A', complete: '#2E8B57', sourceBg: '#FAF7F1' } }
+    }, (err, res) => {
+      if (err) { toast('Falha no envio: ' + (err.statusText || err.message || 'erro'), 'error'); return; }
+      if (res.event === 'success') urls.push(optimizeUrl(res.info.secure_url));
+      if (res.event === 'close' && urls.length) onDone(urls);
+    });
+    w.open();
+  }
+  window.CasaUpload = { open: openUploader };
+
+  // Botão "Enviar foto" ao lado de cada campo de imagem do painel
+  const UPLOAD_TARGETS = [
+    '[data-media-field="src"]', '[data-media-field="full"]', '[data-media-field="poster"]',
+    '[data-combo-field="images"]', '[data-bal-field="images"]', '[data-svc-field="image"]',
+    '#cfgIncludedDecorationImage', '#cfgProfilePhoto'
+  ].join(',');
+  function enhanceUploadFields(scope = document) {
+    scope.querySelectorAll(UPLOAD_TARGETS).forEach(field => {
+      if (field.dataset.uploadReady) return;
+      if (field.matches('[data-media-field="src"]') && field.closest('[data-media-idx]') &&
+          data.media[+field.closest('[data-media-idx]').dataset.mediaIdx]?.type === 'video') return;
+      field.dataset.uploadReady = '1';
+      const isList = field.tagName === 'TEXTAREA';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-outline btn-sm upload-btn';
+      btn.innerHTML = `<i data-lucide="upload"></i>${isList ? 'Enviar fotos' : 'Enviar foto'}`;
+      btn.addEventListener('click', () => openUploader({
+        multiple: isList,
+        onDone: (urls) => {
+          if (isList) {
+            const cur = field.value.split('\n').map(s => s.trim()).filter(Boolean);
+            field.value = cur.concat(urls).join('\n');
+          } else {
+            field.value = urls[0];
+          }
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }));
+      field.insertAdjacentElement('afterend', btn);
+      if (window.lucide) window.lucide.createIcons();
+    });
+  }
+  new MutationObserver(() => enhanceUploadFields()).observe(document.querySelector('.admin-main') || document.body, { childList: true, subtree: true });
+  enhanceUploadFields();
+
+  // Configuração do Cloudinary
+  function renderCloudConfig() {
+    const c = cloudCfg();
+    if ($('#cfgCloudName')) $('#cfgCloudName').value = c.cloudName || '';
+    if ($('#cfgCloudPreset')) $('#cfgCloudPreset').value = c.uploadPreset || '';
+    const st = $('#cloudStatus');
+    if (st) { st.textContent = cloudReady() ? 'Conectado' : 'Não configurado'; st.classList.toggle('ok', cloudReady()); }
+  }
+  ['#cfgCloudName', '#cfgCloudPreset'].forEach(sel => $(sel)?.addEventListener('change', () => {
+    data.config.cloudinary = {
+      cloudName: ($('#cfgCloudName')?.value || '').trim(),
+      uploadPreset: ($('#cfgCloudPreset')?.value || '').trim()
+    };
+    persist();
+    renderCloudConfig();
+  }));
+  renderCloudConfig();
+
+  // Envio em lote para a galeria (cria uma mídia por foto)
+  function fillUploadCategory() {
+    const sel = $('#uploadCategory');
+    if (!sel) return;
+    const cats = window.DataStore.MEDIA_CATEGORIES || [];
+    const prev = sel.value;
+    sel.innerHTML = cats.map(c => `<option value="${c.id}">${escapeAttr(c.label)}</option>`).join('');
+    if (prev) sel.value = prev;
+  }
+  fillUploadCategory();
+  $('#btnUploadPhotos')?.addEventListener('click', () => openUploader({
+    multiple: true,
+    onDone: (urls) => {
+      data.media = data.media || [];
+      const cat = $('#uploadCategory')?.value || (window.DataStore.MEDIA_CATEGORIES || [])[0]?.id || 'estrutura';
+      urls.slice().reverse().forEach((u, k) => data.media.unshift({
+        id: 'm-' + Date.now().toString(36) + k, category: cat, type: 'image', size: '', src: u, full: '', alt: ''
+      }));
+      persist();
+      renderGaleria();
+      toast(`${urls.length} foto(s) adicionada(s) à galeria`);
+    }
+  }));
+
+  // Banner da home
+  function renderHero() {
+    const root = $('#heroRoot');
+    if (!root) return;
+    data.config.heroImages = data.config.heroImages || [];
+    const list = data.config.heroImages;
+    root.innerHTML = list.map((u, i) => `
+      <div class="hero-admin-item">
+        <img src="${escapeAttr(u)}" alt="" onerror="this.style.opacity='0.15'">
+        <div class="hero-admin-actions">
+          <button class="admin-icon-btn" data-hero-move="${i}" data-dir="-1" title="Mover para antes" ${i === 0 ? 'disabled' : ''}><i data-lucide="arrow-left"></i></button>
+          <span>${i + 1}</span>
+          <button class="admin-icon-btn" data-hero-move="${i}" data-dir="1" title="Mover para depois" ${i === list.length - 1 ? 'disabled' : ''}><i data-lucide="arrow-right"></i></button>
+          <button class="admin-icon-btn danger" data-hero-del="${i}" title="Remover"><i data-lucide="trash-2"></i></button>
+        </div>
+      </div>`).join('') || '<p class="help">Nenhuma foto no banner ainda.</p>';
+    root.querySelectorAll('[data-hero-move]').forEach(b => b.addEventListener('click', () => {
+      const i = +b.dataset.heroMove, j = i + (+b.dataset.dir);
+      [list[i], list[j]] = [list[j], list[i]];
+      persist(); renderHero();
+    }));
+    root.querySelectorAll('[data-hero-del]').forEach(b => b.addEventListener('click', () => {
+      if (!confirm('Remover esta foto do banner?')) return;
+      list.splice(+b.dataset.heroDel, 1);
+      persist(); renderHero();
+    }));
+    if (window.lucide) window.lucide.createIcons();
+  }
+  $('#btnUploadHero')?.addEventListener('click', () => openUploader({
+    multiple: true,
+    onDone: (urls) => {
+      data.config.heroImages = (data.config.heroImages || []).concat(urls).slice(0, 4);
+      persist(); renderHero();
+      if (urls.length && data.config.heroImages.length === 4) toast('Banner com 4 fotos (máximo)');
+    }
+  }));
+  renderHero();
+
   // ===== INIT =====
   // Avisa se a nuvem recusar alguma alteração
   document.addEventListener('firebase:error', (e) => {

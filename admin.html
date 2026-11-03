@@ -260,10 +260,32 @@
             <button class="btn btn-outline btn-sm" id="btnAddVideo">
               <i data-lucide="video"></i>Novo vídeo
             </button>
-            <button class="btn btn-primary btn-sm" id="btnAddPhoto">
-              <i data-lucide="image-plus"></i>Nova foto
+            <button class="btn btn-outline btn-sm" id="btnAddPhoto">
+              <i data-lucide="image-plus"></i>Nova foto (link)
+            </button>
+            <button class="btn btn-primary btn-sm" id="btnUploadPhotos">
+              <i data-lucide="upload"></i>Enviar fotos
             </button>
           </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <div>
+              <h2>Banner da home</h2>
+              <p>Até 4 fotos que passam no topo da página inicial. Prefira fotos horizontais. A primeira aparece primeiro.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btnUploadHero">
+              <i data-lucide="upload"></i>Enviar fotos
+            </button>
+          </div>
+          <div class="hero-admin-grid" id="heroRoot"></div>
+          <p class="help">Sem fotos aqui, o site usa as fotos padrão.</p>
+        </div>
+
+        <div class="media-upload-bar">
+          <label for="uploadCategory">Categoria das fotos enviadas</label>
+          <select id="uploadCategory"></select>
         </div>
         <div class="media-grid" id="galeriaRoot"></div>
       </section>
@@ -434,6 +456,28 @@
           <div>
             <h1>Configurações</h1>
             <p>Ajustes gerais do site e da conta admin.</p>
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <div>
+              <h2>Envio de fotos (Cloudinary)</h2>
+              <p>Liga os botões "Enviar foto" do painel à sua conta gratuita do Cloudinary.</p>
+            </div>
+            <span class="cloud-status" id="cloudStatus"></span>
+          </div>
+          <div class="admin-grid cols-2">
+            <div class="admin-field">
+              <label>Cloud name</label>
+              <input type="text" id="cfgCloudName" placeholder="ex: casadebia" autocomplete="off">
+              <span class="help">Aparece no topo do painel do Cloudinary (Dashboard).</span>
+            </div>
+            <div class="admin-field">
+              <label>Upload preset <small>(modo "Unsigned")</small></label>
+              <input type="text" id="cfgCloudPreset" placeholder="ex: casadebia_site" autocomplete="off">
+              <span class="help">Criado em Settings → Upload → Upload presets.</span>
+            </div>
           </div>
         </div>
 

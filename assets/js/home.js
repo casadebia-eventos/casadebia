@@ -67,6 +67,18 @@
     stats.forEach(el => io.observe(el));
   });
 
+  // ===== FOTOS DO BANNER (vêm do painel, se cadastradas) =====
+  window.DataStore.onReady(() => {
+    const imgs = (window.DataStore.loadData().config?.heroImages || []).filter(Boolean);
+    if (!imgs.length) return;
+    const slides = [...document.querySelectorAll('.hero-slide')];
+    // Se houver menos de 4 fotos, elas se repetem no carrossel
+    slides.forEach((s, i) => {
+      const url = imgs[i % imgs.length];
+      s.style.backgroundImage = `url('${url.replace(/'/g, '%27')}')`;
+    });
+  });
+
   // ===== PREÇOS DOS PACOTES NA HOME (vêm do painel) =====
   window.DataStore.onReady(() => {
     const pkgs = window.SIM_PRICING?.packages || {};

@@ -1309,3 +1309,17 @@ body.admin-body {
 .admin-nav-label { font-family: var(--font-brand); letter-spacing: 0.16em; }
 /* Números do painel em fonte de leitura (mais nítida para valores) */
 .stat-card-num, .admin-item-price, .order-total, .up-day { font-family: var(--font-body); font-weight: 700; letter-spacing: -0.01em; }
+
+/* ===== Envio de fotos ===== */
+.upload-btn { margin-top: var(--space-2); align-self: flex-start; }
+.upload-btn i { width: 14px; height: 14px; }
+.media-upload-bar { display: flex; align-items: center; gap: var(--space-3); margin: var(--space-2) 0 var(--space-4); flex-wrap: wrap; }
+.media-upload-bar label { font-size: var(--fs-sm); color: var(--muted); font-weight: 600; }
+.media-upload-bar select { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--white); font: inherit; }
+.cloud-status { font-size: var(--fs-xs); font-weight: 700; padding: 4px 10px; border-radius: var(--radius-full); background: var(--rose-light); color: var(--gold-dark); white-space: nowrap; }
+.cloud-status.ok { background: rgba(37, 211, 102, 0.14); color: var(--whatsapp-dark); }
+.hero-admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-4); margin-top: var(--space-3); }
+.hero-admin-item { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: var(--white); }
+.hero-admin-item img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--bg); }
+.hero-admin-actions { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; gap: 4px; }
+.hero-admin-actions span { font-weight: 700; color: var(--gold-dark); font-size: var(--fs-sm); }
