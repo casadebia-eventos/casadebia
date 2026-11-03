@@ -40,7 +40,7 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(135deg, rgba(13, 11, 9, 0.78) 0%, rgba(13, 11, 9, 0.55) 50%, rgba(169, 120, 42, 0.5) 100%);
+    linear-gradient(135deg, rgba(13, 11, 9, 0.84) 0%, rgba(13, 11, 9, 0.62) 55%, rgba(169, 120, 42, 0.45) 100%);
   z-index: -1;
 }
 
@@ -71,11 +71,12 @@
 
 .hero-title {
   color: var(--white);
-  font-size: clamp(2.6rem, 6.5vw, 5rem);
+  font-size: clamp(2.4rem, 5.6vw, 4.4rem);
   line-height: 1.05;
   margin-bottom: var(--space-5);
 }
 .hero-title .accent {
+  display: block;
   background: linear-gradient(135deg, var(--gold) 0%, var(--rose-light) 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -86,7 +87,7 @@
 .hero-sub {
   font-size: var(--fs-md);
   color: rgba(255, 255, 255, 0.85);
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-6);
   max-width: 580px;
   line-height: 1.7;
 }
@@ -573,7 +574,7 @@
 /* Logo no banner principal */
 .hero-logo {
   display: block;
-  width: clamp(210px, 24vw, 320px);
+  width: clamp(180px, 19vw, 260px);
   height: auto;
   margin: 0 0 var(--space-5) -6px;
   filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
