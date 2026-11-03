@@ -105,7 +105,19 @@ window.DataStore.onReady(function () {
     const nameEl = $('#sidebarName');
     if (nameEl) nameEl.textContent = p.name || 'Bia';
     const greet = $('#dashGreeting');
-    if (greet) greet.textContent = `Olá, ${p.name || 'Bia'} 👋`;
+    if (greet) {
+      // Uma frase por dia da semana (domingo = 0)
+      const frases = [
+        'Olá, chefe! Deus abençoe seu dia 🙏',
+        'Bom dia, chefe! Hoje é dia de fechar contrato 💪',
+        'Olá, chefe! Cada evento aqui é uma história bem contada ✨',
+        'Força, chefe! Disciplina hoje, agenda cheia amanhã 🚀',
+        'Olá, chefe! Quem planta atendimento, colhe indicação 🌱',
+        'Bora, chefe! Sexta é dia de casa cheia 🎉',
+        'Olá, chefe! Deus está no comando, e a Casa de Bia também 👑'
+      ];
+      greet.textContent = frases[new Date().getDay()];
+    }
   }
 
   // Logout
