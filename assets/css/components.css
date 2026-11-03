@@ -427,3 +427,7 @@
 /* Tipografia da marca: rótulos pequenos na mesma família de letra da logo */
 .eyebrow { font-family: var(--font-brand); letter-spacing: 0.22em; font-weight: 600; }
 h1, h2, h3 { letter-spacing: -0.005em; }
+
+/* Home: no topo, a logo grande do banner é a protagonista; a do menu aparece ao rolar */
+.home-page .navbar:not(.scrolled) .nav-logo-full { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+.home-page .navbar .nav-logo-full { transition: opacity var(--transition), transform var(--transition); }
