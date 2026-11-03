@@ -22,7 +22,7 @@
     <nav class="navbar" id="navbar">
       <div class="nav-container">
         <a href="index.html" class="nav-brand" aria-label="Casa de Bia — Home">
-          <div class="nav-logo">CB</div>
+          <div class="nav-logo"><img src="assets/img/logo-emblema.png" alt="Logo Casa de Bia" width="44" height="44"></div>
           <div class="nav-brand-text">
             <span class="nav-brand-name">Casa de Bia</span>
             <span class="nav-brand-tag">Espaço de Eventos</span>
@@ -64,7 +64,7 @@
         <div class="footer-grid">
           <div>
             <div class="footer-brand">
-              <div class="nav-logo">CB</div>
+              <div class="nav-logo"><img src="assets/img/logo-emblema.png" alt="Logo Casa de Bia" width="44" height="44"></div>
               <span class="footer-brand-name">Casa de Bia</span>
             </div>
             <p class="footer-desc">

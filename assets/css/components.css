@@ -119,6 +119,8 @@
   box-shadow: var(--shadow-md);
   transition: transform var(--transition);
 }
+.nav-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nav-logo:has(img) { background: #000; border: 1px solid rgba(212, 169, 66, 0.55); overflow: hidden; }
 .nav-brand:hover .nav-logo { transform: rotate(-8deg) scale(1.05); }
 
 .nav-brand-text {
