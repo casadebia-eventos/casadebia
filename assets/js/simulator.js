@@ -75,7 +75,7 @@
         case 1: return !!state.date;
         case 2: return !!state.package;
         case 3: {
-          if (state.package === 'premium' || state.package === 'promax') return true;
+          if (window.SIM_PRICING.packages[state.package]?.includesDecoration) return true;
           if (state.decoration?.enabled === false) return true;
           if (state.decoration?.enabled === true) {
             return !!state.decoration.type && !!state.decoration.combo;
@@ -192,7 +192,7 @@
         // Reset de gás se pacote já inclui gás
         if (window.SIM_PRICING.packages[state.package]?.includesGas) state.gas = null;
         // Premium/Pro Max: forçar decoração habilitada
-        if (state.package === 'premium' || state.package === 'promax') {
+        if (window.SIM_PRICING.packages[state.package]?.includesDecoration) {
           state.decoration = state.decoration || { enabled: null, type: null, combo: null, addons: [], balloon: null };
           state.decoration.enabled = true;
         }
@@ -321,36 +321,61 @@
     const decoSummary = document.getElementById('decoSummary');
     const decoIncludedNote = document.getElementById('decoIncludedNote');
 
-    // Premium já inclui decoração — força enabled=false e exibe nota
-    const isPremium = () => state.package === 'premium' || state.package === 'promax';
+    // Pacotes que já incluem decoração (Premium, Pro Max e futuros, ex.: Casamento)
+    const isPremium = () => !!window.SIM_PRICING?.packages?.[state.package]?.includesDecoration;
+
+    // Decoração inclusa do pacote escolhido (cada pacote tem a sua)
+    const includedDeco = () => {
+      const DD = window.DECORATION_DATA || {};
+      const inc = DD.included?.[state.package];
+      if (inc) return inc;
+      if (state.package === 'promax' && DD.promaxIncluded) return DD.promaxIncluded;
+      return null;
+    };
+
+    const renderIncludedBox = () => {
+      if (!decoIncludedNote) return;
+      const inc = isPremium() ? includedDeco() : null;
+      decoIncludedNote.style.display = isPremium() ? '' : 'none';
+      if (!isPremium()) return;
+      const pkgName = window.SIM_PRICING.packages[state.package]?.name || '';
+      const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const items = (inc?.items || []).filter(Boolean);
+      const decoIncludedText = document.getElementById('decoIncludedText');
+      if (decoIncludedText) {
+        decoIncludedText.innerHTML =
+          `<strong>${esc(inc?.title || `Decoração ${pkgName} — já montada e inclusa`)}</strong>` +
+          (items.length ? `<ul class="deco-included-list">${items.map(it => `<li>${esc(it)}</li>`).join('')}</ul>` : '') +
+          `<span class="deco-included-extra">Já vem montada e inclusa no pacote ${esc(pkgName)}. Você ainda pode adicionar elementos extras abaixo.</span>`;
+      }
+      const photoWrap = decoIncludedNote.querySelector('.deco-included-photo');
+      const img = document.getElementById('decoDefaultImg');
+      if (photoWrap && img) {
+        if (inc?.image) {
+          img.src = inc.image;
+          img.alt = inc.title || `Decoração inclusa no ${pkgName}`;
+          photoWrap.style.display = '';
+        } else {
+          photoWrap.style.display = 'none';
+        }
+      }
+      decoIncludedNote.classList.toggle('no-photo', !inc?.image);
+    };
 
     const renderDecorationVisibility = () => {
-      // Para Premium/Pro Max: força enabled=true e mostra módulo de personalização direto
+      // Pacotes com decoração inclusa: força enabled=true e mostra módulo de personalização direto
       if (isPremium()) {
         if (state.decoration) state.decoration.enabled = true;
       }
 
-      if (decoIncludedNote) decoIncludedNote.style.display = isPremium() ? '' : 'none';
+      renderIncludedBox();
 
-      // Etapa 3 — a frase abaixo do título "Decoração" muda para Premium/Pro Max.
-      // No Básico/Essencial mantém a explicação original (combo/pegue e monte/sem decoração).
+      // Etapa 3 — a frase abaixo do título "Decoração" muda nos pacotes com decoração inclusa.
       const decoStepDesc = document.getElementById('decoStepDesc');
       if (decoStepDesc) {
         decoStepDesc.textContent = isPremium()
           ? 'Transforme seu evento em uma experiência inesquecível, monte a identidade que você quer ser lembrada!'
           : 'Você pode escolher um combo pronto, montar pegue e monte ou seguir sem decoração.';
-      }
-
-      // Etapa 4 — decoração já montada do Pro Max (lista de itens, editável no admin).
-      const decoIncludedText = document.getElementById('decoIncludedText');
-      if (decoIncludedText && state.package === 'promax') {
-        const inc = window.DECORATION_DATA?.promaxIncluded;
-        if (inc?.items?.length) {
-          decoIncludedText.innerHTML =
-            `<strong>${inc.title || 'Decoração inclusa'}</strong>` +
-            `<ul class="deco-included-list">${inc.items.map(it => `<li>${it}</li>`).join('')}</ul>` +
-            `<span class="deco-included-extra">Já vem montada e inclusa no pacote. Você ainda pode adicionar elementos extras abaixo.</span>`;
-        }
       }
 
       const decoQuestion = document.getElementById('decoQuestion');
@@ -1445,7 +1470,7 @@
       }
 
       // DECORAÇÃO
-      const isPremiumPkg = state.package === 'premium' || state.package === 'promax';
+      const isPremiumPkg = !!window.SIM_PRICING.packages[state.package]?.includesDecoration;
       if (state.decoration?.enabled === true || isPremiumPkg) {
         const combo = state.decoration?.combo ? DD.combos.find(c => c.id === state.decoration.combo) : null;
         if (combo) {
@@ -1453,13 +1478,11 @@
           const typeLabel = combo.type === 'pegue-monte' ? 'Pegue e Monte' : 'Decoração Montada';
           lines.push(`${typeLabel} — ${fmt(combo.price)}`);
           lines.push('');
-        } else if (state.package === 'promax' && DD.promaxIncluded?.items?.length) {
-          lines.push(`🎨 *${DD.promaxIncluded.title || 'Decoração inclusa'}*`);
-          DD.promaxIncluded.items.forEach(it => lines.push(`• ${it}`));
-          lines.push('');
         } else if (isPremiumPkg) {
-          lines.push('🎨 *Decoração inclusa no pacote*');
-          lines.push('Modelo "pegue e monte" com kit básico');
+          const inc = DD.included?.[state.package] || (state.package === 'promax' ? DD.promaxIncluded : null);
+          lines.push(`🎨 *${inc?.title || 'Decoração inclusa no pacote'}*`);
+          (inc?.items || []).filter(Boolean).forEach(it => lines.push(`• ${it}`));
+          if (!(inc?.items || []).length) lines.push('Decoração montada pela Casa de Bia');
           lines.push('');
         }
       }

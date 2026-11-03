@@ -606,50 +606,57 @@ window.DataStore.onReady(function () {
     renderPromaxIncluded();
   }
 
-  // Decoração já montada do Pro Max (título + lista de itens)
+  // Decoração já montada de cada pacote com decoração inclusa (foto + título + itens)
   function renderPromaxIncluded() {
     const root = $('#promaxIncludedRoot');
     if (!root) return;
-    if (!data.decoration.promaxIncluded) {
-      data.decoration.promaxIncluded = { title: 'Decoração Pro Max — já montada e inclusa', items: [] };
-    }
-    const inc = data.decoration.promaxIncluded;
+    const D = data.decoration;
+    if (!D.included) D.included = {};
+    const pkgs = Object.values(data.packages || {}).filter(p => p.includesDecoration);
+    pkgs.forEach(p => {
+      if (!D.included[p.id]) {
+        const old = p.id === 'promax' ? D.promaxIncluded : null;
+        D.included[p.id] = { title: old?.title || `Decoração ${p.name} — já montada e inclusa`, items: old?.items ? [...old.items] : [], image: '' };
+      }
+    });
 
-    root.innerHTML = `
-      <div class="admin-field">
-        <label>Título</label>
-        <input id="promaxIncTitle" value="${escapeAttr(inc.title || '')}">
-      </div>
-      <div class="admin-field" style="margin-top: var(--space-4);">
-        <label>Itens inclusos</label>
-        <div class="array-editor" id="promaxIncItems">
-          ${inc.items.map((it, i) => arrayRowHTML(it, i)).join('')}
-          <span class="array-add" id="btnAddPromaxItem"><i data-lucide="plus"></i>Adicionar item</span>
+    root.innerHTML = pkgs.length ? pkgs.map(p => {
+      const inc = D.included[p.id];
+      return `
+      <div class="admin-card" data-inc-pkg="${p.id}" style="margin-top: var(--space-4);">
+        <h3 style="margin:0 0 var(--space-3);">Pacote ${escapeAttr(p.name)}</h3>
+        <div class="admin-field">
+          <label>Título</label>
+          <input data-inc-field="title" value="${escapeAttr(inc.title || '')}">
         </div>
-      </div>
-    `;
+        <div class="admin-field" style="margin-top: var(--space-4);">
+          <label>Foto da decoração deste pacote</label>
+          <input type="url" data-inc-field="image" placeholder="https://..." value="${escapeAttr(inc.image || '')}">
+          ${inc.image ? `<img src="${escapeAttr(inc.image)}" alt="" style="margin-top:8px;max-width:220px;border-radius:8px;display:block;">` : '<small style="display:block;margin-top:6px;opacity:.7;">Sem foto: o cliente vê só a descrição.</small>'}
+        </div>
+        <div class="admin-field" style="margin-top: var(--space-4);">
+          <label>Itens inclusos</label>
+          <div class="array-editor">
+            ${(inc.items || []).map((it, i) => arrayRowHTML(it, i)).join('')}
+            <span class="array-add" data-inc-add><i data-lucide="plus"></i>Adicionar item</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('') : '<p>Nenhum pacote está marcado como "inclui decoração".</p>';
 
-    $('#promaxIncTitle')?.addEventListener('change', (e) => {
-      inc.title = e.target.value;
-      persist();
-    });
-    root.querySelectorAll('#promaxIncItems .array-row input').forEach((inp, i) => {
-      inp.addEventListener('change', () => {
-        inc.items[i] = inp.value;
-        persist();
+    root.querySelectorAll('[data-inc-pkg]').forEach(card => {
+      const inc = D.included[card.dataset.incPkg];
+      card.querySelector('[data-inc-field="title"]')?.addEventListener('change', (e) => { inc.title = e.target.value; persist(); });
+      card.querySelector('[data-inc-field="image"]')?.addEventListener('change', (e) => { inc.image = e.target.value.trim(); persist(); renderPromaxIncluded(); });
+      card.querySelectorAll('.array-row input').forEach((inp, i) => {
+        inp.addEventListener('change', () => { inc.items[i] = inp.value; persist(); });
       });
-    });
-    root.querySelectorAll('#promaxIncItems .array-row [data-remove]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        inc.items.splice(+btn.dataset.remove, 1);
-        persist();
-        renderPromaxIncluded();
+      card.querySelectorAll('.array-row [data-remove]').forEach(btn => {
+        btn.addEventListener('click', () => { inc.items.splice(+btn.dataset.remove, 1); persist(); renderPromaxIncluded(); });
       });
-    });
-    $('#btnAddPromaxItem')?.addEventListener('click', () => {
-      inc.items.push('Novo item');
-      persist();
-      renderPromaxIncluded();
+      card.querySelector('[data-inc-add]')?.addEventListener('click', () => {
+        inc.items = inc.items || []; inc.items.push('Novo item'); persist(); renderPromaxIncluded();
+      });
     });
 
     if (window.lucide) window.lucide.createIcons();
@@ -1798,7 +1805,7 @@ window.DataStore.onReady(function () {
   const UPLOAD_TARGETS = [
     '[data-media-field="src"]', '[data-media-field="full"]', '[data-media-field="poster"]',
     '[data-combo-field="images"]', '[data-bal-field="images"]', '[data-svc-field="image"]',
-    '#cfgIncludedDecorationImage', '#cfgProfilePhoto'
+    '#cfgIncludedDecorationImage', '#cfgProfilePhoto', '[data-inc-field="image"]'
   ].join(',');
   function enhanceUploadFields(scope = document) {
     scope.querySelectorAll(UPLOAD_TARGETS).forEach(field => {

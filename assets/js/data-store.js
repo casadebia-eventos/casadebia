@@ -110,7 +110,22 @@
         { id: 'arco-floral',    name: 'Arco floral natural',         description: 'Flores naturais para entrada',      price: 220 },
         { id: 'mesa-bolo',      name: 'Mesa de bolo decorada extra', description: 'Mesa adicional para bolo principal',price: 150 }
       ],
-      // Decoração que JÁ vem montada no pacote Pro Max (editável no painel admin)
+      // Decoração que JÁ vem montada em cada pacote com decoração inclusa
+      // (Premium, Pro Max e, no futuro, Casamento). Editável no painel admin.
+      // Cada pacote tem sua própria foto, título e lista de itens.
+      included: {
+        premium: { title: 'Decoração Premium — já montada e inclusa', items: [], image: '' },
+        promax:  { title: 'Decoração Pro Max — já montada e inclusa', items: [
+          '2 Painéis (romano) + forro',
+          '1 Trio de cilindros + capas (consultar cor disponível, podendo mesclar as cores)',
+          '1 Vaso',
+          '5 Bandejas',
+          '1 Jarro',
+          '1 Tapete',
+          '1 LED de letra ou idade'
+        ], image: '' }
+      },
+      // (antigo) mantido só para compatibilidade com dados salvos antes
       promaxIncluded: {
         title: 'Decoração Pro Max — já montada e inclusa',
         items: [
@@ -242,6 +257,21 @@
       if (!merged.decoration.promaxIncluded) {
         merged.decoration.promaxIncluded = clone(DEFAULTS.decoration.promaxIncluded);
       }
+      // Decoração inclusa por pacote: migra o formato antigo (só Pro Max + 1 foto para todos)
+      if (!merged.decoration.included) {
+        const inc = clone(DEFAULTS.decoration.included);
+        const oldPm = merged.decoration.promaxIncluded;
+        if (oldPm) inc.promax = Object.assign(inc.promax, { title: oldPm.title || inc.promax.title, items: oldPm.items || inc.promax.items });
+        const oldImg = merged.config?.includedDecorationImage || '';
+        if (oldImg && !/unsplash\.com/.test(oldImg)) inc.promax.image = oldImg;
+        merged.decoration.included = inc;
+      }
+      // Todo pacote marcado "inclui decoração" ganha seu bloco próprio (ex.: Casamento no futuro)
+      Object.keys(merged.packages).forEach(k => {
+        if (merged.packages[k]?.includesDecoration && !merged.decoration.included[k]) {
+          merged.decoration.included[k] = { title: `Decoração ${merged.packages[k].name || k} — já montada e inclusa`, items: [], image: '' };
+        }
+      });
       return merged;
     } catch { return clone(DEFAULTS); }
   };
@@ -289,11 +319,7 @@
       document.querySelectorAll('[data-gas-price]').forEach(el => el.textContent = fmt(gas));
       document.querySelectorAll('[data-gas-plus]').forEach(el => el.textContent = '+' + fmt(gas));
       document.querySelectorAll('[data-gas-plus-pretty]').forEach(el => el.textContent = '+ ' + fmt(gas));
-      const decoImg = data?.config?.includedDecorationImage;
-      if (decoImg) {
-        const el = document.getElementById('decoDefaultImg');
-        if (el) el.src = decoImg;
-      }
+      // (a foto da decoração inclusa agora é por pacote — definida no simulador)
       // Estrutura do espaço (servicos.html) — render a partir dos dados editáveis
       const structureEl = document.getElementById('structureList');
       const items = data?.config?.structureItems;
