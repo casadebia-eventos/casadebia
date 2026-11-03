@@ -109,7 +109,7 @@ window.DataStore.onReady(function () {
       // Uma frase por dia da semana (domingo = 0)
       const frases = [
         'Olá, chefe! Deus abençoe seu dia 🙏',
-        'Bom dia, chefe! Hoje é dia de fechar contrato 💪',
+        'Vamos, chefe! Hoje é dia de fechar contrato 💪',
         'Olá, chefe! Cada evento aqui é uma história bem contada ✨',
         'Força, chefe! Disciplina hoje, agenda cheia amanhã 🚀',
         'Olá, chefe! Quem planta atendimento, colhe indicação 🌱',
