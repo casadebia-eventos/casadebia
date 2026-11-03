@@ -23,7 +23,8 @@
   --whatsapp-dark: #128C7E;
 
   /* Tipografia */
-  --font-display: 'Playfair Display', Georgia, serif;
+  --font-display: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-brand: 'Cinzel', 'Cormorant Garamond', Georgia, serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* Escala tipográfica */
@@ -72,7 +73,7 @@
 
   /* Layout */
   --container-max: 1280px;
-  --navbar-height: 96px;
+  --navbar-height: 108px;
   --z-navbar: 100;
   --z-floating: 90;
   --z-modal: 200;

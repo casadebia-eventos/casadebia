@@ -5,7 +5,7 @@
 /* ===== HERO ===== */
 .hero {
   position: relative;
-  min-height: 100vh;
+  min-height: 92vh;
   padding-top: var(--navbar-height);
   display: flex;
   align-items: center;
@@ -71,7 +71,7 @@
 
 .hero-title {
   color: var(--white);
-  font-size: clamp(2.5rem, 7vw, 5.5rem);
+  font-size: clamp(2.6rem, 6.5vw, 5rem);
   line-height: 1.05;
   margin-bottom: var(--space-5);
 }
@@ -569,3 +569,27 @@
 .reveal.delay-2 { transition-delay: 0.2s; }
 .reveal.delay-3 { transition-delay: 0.3s; }
 .reveal.delay-4 { transition-delay: 0.4s; }
+
+/* Logo no banner principal */
+.hero-logo {
+  display: block;
+  width: clamp(210px, 24vw, 320px);
+  height: auto;
+  margin: 0 0 var(--space-5) -6px;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+}
+
+/* Nota do Google abaixo dos depoimentos */
+.tst-google { margin-top: var(--space-6); text-align: center; }
+.tst-google a {
+  display: inline-flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid rgba(217, 174, 82, 0.35);
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: var(--fs-sm);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+.tst-google a:hover { border-color: var(--gold); color: var(--white); }
+.tst-google-score { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 700; color: var(--gold); line-height: 1; }
+.tst-google-stars { color: var(--gold); letter-spacing: 2px; }
