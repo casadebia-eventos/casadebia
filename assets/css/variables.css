@@ -3,20 +3,20 @@
    ============================================ */
 :root {
   /* Cores primárias */
-  --rose: #C8445A;
-  --rose-light: #F5E8EB;
-  --rose-dark: #A8334A;
-  --gold: #D4A942;
-  --gold-light: #FAF3E0;
-  --gold-dark: #B58E2F;
+  --rose: #A9782A;
+  --rose-light: #F6EEDC;
+  --rose-dark: #7E5818;
+  --gold: #D9AE52;
+  --gold-light: #FBF5E6;
+  --gold-dark: #A9782A;
 
   /* Neutros */
-  --dark: #1C1410;
-  --text: #3D2B1F;
-  --muted: #8A6E65;
-  --bg: #FDF9F7;
+  --dark: #0D0B09;
+  --text: #2B2620;
+  --muted: #7A7064;
+  --bg: #FAF7F1;
   --white: #FFFFFF;
-  --border: #EDE4DF;
+  --border: #E9E2D3;
 
   /* WhatsApp */
   --whatsapp: #25D366;
@@ -51,11 +51,11 @@
   --space-10: 8rem;
 
   /* Sombras */
-  --shadow-sm: 0 1px 2px rgba(28, 20, 16, 0.06);
-  --shadow-md: 0 4px 12px rgba(28, 20, 16, 0.08);
-  --shadow-lg: 0 12px 32px rgba(28, 20, 16, 0.12);
-  --shadow-xl: 0 24px 64px rgba(28, 20, 16, 0.18);
-  --shadow-rose: 0 12px 32px rgba(200, 68, 90, 0.25);
+  --shadow-sm: 0 1px 2px rgba(13, 11, 9, 0.06);
+  --shadow-md: 0 4px 12px rgba(13, 11, 9, 0.08);
+  --shadow-lg: 0 12px 32px rgba(13, 11, 9, 0.12);
+  --shadow-xl: 0 24px 64px rgba(13, 11, 9, 0.18);
+  --shadow-rose: 0 12px 32px rgba(169, 120, 42, 0.25);
   --shadow-gold: 0 12px 32px rgba(212, 169, 66, 0.25);
 
   /* Bordas */
@@ -72,7 +72,7 @@
 
   /* Layout */
   --container-max: 1280px;
-  --navbar-height: 84px;
+  --navbar-height: 96px;
   --z-navbar: 100;
   --z-floating: 90;
   --z-modal: 200;

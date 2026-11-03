@@ -40,7 +40,7 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(135deg, rgba(28, 20, 16, 0.78) 0%, rgba(28, 20, 16, 0.55) 50%, rgba(200, 68, 90, 0.5) 100%);
+    linear-gradient(135deg, rgba(13, 11, 9, 0.78) 0%, rgba(13, 11, 9, 0.55) 50%, rgba(169, 120, 42, 0.5) 100%);
   z-index: -1;
 }
 
@@ -445,7 +445,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 15% 20%, rgba(200, 68, 90, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 15% 20%, rgba(169, 120, 42, 0.18) 0%, transparent 45%),
     radial-gradient(circle at 85% 80%, rgba(212, 169, 66, 0.18) 0%, transparent 45%);
   pointer-events: none;
 }
@@ -530,7 +530,7 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 10% 50%, rgba(200, 68, 90, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 10% 50%, rgba(169, 120, 42, 0.12) 0%, transparent 40%),
     radial-gradient(circle at 90% 50%, rgba(212, 169, 66, 0.15) 0%, transparent 40%);
   pointer-events: none;
 }

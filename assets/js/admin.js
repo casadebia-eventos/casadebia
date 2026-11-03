@@ -344,8 +344,8 @@ window.DataStore.onReady(function () {
         labels: months.map(m => m.label),
         datasets: [{
           data: months.map(m => m.total),
-          backgroundColor: 'rgba(200, 68, 90, 0.85)',
-          hoverBackgroundColor: '#A8334A',
+          backgroundColor: 'rgba(169, 120, 42, 0.85)',
+          hoverBackgroundColor: '#7E5818',
           borderRadius: 8,
           maxBarThickness: 46
         }]

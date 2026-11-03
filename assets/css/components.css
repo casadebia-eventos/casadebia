@@ -27,7 +27,7 @@
 .btn-primary:hover {
   background: var(--rose-dark);
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(200, 68, 90, 0.35);
+  box-shadow: 0 16px 40px rgba(169, 120, 42, 0.35);
 }
 
 .btn-gold {
@@ -75,7 +75,7 @@
   left: 0;
   right: 0;
   height: var(--navbar-height);
-  background: rgba(253, 249, 247, 0.85);
+  background: rgba(250, 247, 241, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid transparent;
@@ -84,7 +84,7 @@
 }
 
 .navbar.scrolled {
-  background: rgba(253, 249, 247, 0.95);
+  background: rgba(250, 247, 241, 0.95);
   border-bottom-color: var(--border);
   box-shadow: var(--shadow-sm);
 }
@@ -282,7 +282,7 @@
 }
 
 .footer-desc {
-  color: rgba(253, 249, 247, 0.6);
+  color: rgba(250, 247, 241, 0.6);
   font-size: var(--fs-sm);
   max-width: 360px;
   margin-bottom: var(--space-5);
@@ -300,7 +300,7 @@
 
 .footer-list { display: flex; flex-direction: column; gap: var(--space-3); }
 .footer-list a {
-  color: rgba(253, 249, 247, 0.6);
+  color: rgba(250, 247, 241, 0.6);
   font-size: var(--fs-sm);
   transition: color var(--transition-fast);
   display: inline-flex;
@@ -313,14 +313,14 @@
 
 .footer-bottom {
   padding-top: var(--space-5);
-  border-top: 1px solid rgba(253, 249, 247, 0.1);
+  border-top: 1px solid rgba(250, 247, 241, 0.1);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   align-items: center;
   text-align: center;
   font-size: var(--fs-xs);
-  color: rgba(253, 249, 247, 0.5);
+  color: rgba(250, 247, 241, 0.5);
 }
 
 @media (min-width: 768px) {
@@ -394,7 +394,7 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 20% 20%, rgba(200, 68, 90, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 20% 20%, rgba(169, 120, 42, 0.08) 0%, transparent 40%),
     radial-gradient(circle at 80% 80%, rgba(212, 169, 66, 0.1) 0%, transparent 40%);
   pointer-events: none;
 }
@@ -405,7 +405,20 @@
 /* Skip-link offset para anchors com navbar fixa */
 .scroll-offset { scroll-margin-top: var(--navbar-height); }
 
-/* Logo completa (topo e rodapé) */
-.nav-logo-full { height: 62px; width: auto; display: block; border-radius: 10px; background: #000; box-shadow: 0 0 0 1px rgba(212, 169, 66, 0.45); }
-.footer-logo-full { height: 120px; width: auto; display: block; border-radius: 12px; }
-@media (max-width: 480px) { .nav-logo-full { height: 54px; } }
+/* Logo (topo e rodapé) — versões sem fundo */
+.nav-logo-full { height: 78px; width: auto; display: block; transition: transform var(--transition); }
+.nav-brand:hover .nav-logo-full { transform: scale(1.03); }
+.footer-logo-full { height: 150px; width: auto; display: block; }
+@media (max-width: 480px) { .nav-logo-full { height: 64px; } }
+
+/* Marca d'água da logo em seções de texto */
+.has-watermark { position: relative; isolation: isolate; }
+.has-watermark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("../img/logo-clara.png") center / min(70%, 760px) no-repeat;
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: -1;
+}

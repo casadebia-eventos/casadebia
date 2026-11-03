@@ -22,7 +22,7 @@
     <nav class="navbar" id="navbar">
       <div class="nav-container">
         <a href="index.html" class="nav-brand" aria-label="Casa de Bia — Home">
-          <img class="nav-logo-full" src="assets/img/logo-completa.png" alt="Casa de Bia — Espaço de Eventos">
+          <img class="nav-logo-full" src="assets/img/logo-clara.png" alt="Casa de Bia — Espaço de Eventos">
         </a>
 
         <div class="nav-menu">
@@ -60,7 +60,7 @@
         <div class="footer-grid">
           <div>
             <div class="footer-brand">
-              <img class="footer-logo-full" src="assets/img/logo-completa.png" alt="Casa de Bia — Espaço de Eventos">
+              <img class="footer-logo-full" src="assets/img/logo-escura.png" alt="Casa de Bia — Espaço de Eventos">
             </div>
             <p class="footer-desc">
               Espaço completo para eventos em Salvador. Aniversários, festas infantis, churrascos e celebrações inesquecíveis com decoração, animação e estrutura premium.
@@ -87,7 +87,7 @@
 
         <div class="footer-bottom">
           <span>&copy; ${year} Casa de Bia. Todos os direitos reservados.</span>
-          <span>Espaço de Eventos · Salvador, BA · <a href="admin-login.html" style="color: rgba(253, 249, 247, 0.4); font-size: inherit;">Admin</a></span>
+          <span>Espaço de Eventos · Salvador, BA · <a href="admin-login.html" style="color: rgba(250, 247, 241, 0.4); font-size: inherit;">Admin</a></span>
         </div>
       </div>
     </footer>

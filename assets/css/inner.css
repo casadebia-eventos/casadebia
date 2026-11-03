@@ -79,7 +79,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(28, 20, 16, 0.7) 100%);
+  background: linear-gradient(180deg, transparent 50%, rgba(13, 11, 9, 0.7) 100%);
   opacity: 0;
   transition: opacity var(--transition);
   pointer-events: none;
@@ -135,7 +135,7 @@
 .lightbox {
   position: fixed;
   inset: 0;
-  background: rgba(28, 20, 16, 0.95);
+  background: rgba(13, 11, 9, 0.95);
   z-index: var(--z-modal);
   display: none;
   align-items: center;
@@ -410,7 +410,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(200, 68, 90, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 20% 30%, rgba(169, 120, 42, 0.18) 0%, transparent 45%),
     radial-gradient(circle at 80% 70%, rgba(212, 169, 66, 0.15) 0%, transparent 45%);
   pointer-events: none;
 }
