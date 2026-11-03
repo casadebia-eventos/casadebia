@@ -596,3 +596,9 @@
 .tst-google-score { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 700; color: var(--gold); line-height: 1; }
 .tst-google-stars { color: var(--gold); letter-spacing: 2px; }
 @media (max-width: 767px) { .hero-logo { width: 170px; margin-bottom: var(--space-4); } }
+
+/* Destaques abaixo do banner */
+.stat-link { display: block; color: inherit; border-radius: var(--radius-md); transition: background var(--transition-fast); }
+.stat-link:hover { background: var(--gold-light); }
+.stat-star { font-size: 0.8em; }
+.stat-word { font-size: clamp(var(--fs-xl), 3vw, var(--fs-2xl)); padding-top: 0.25em; }
