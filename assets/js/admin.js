@@ -1884,7 +1884,7 @@ window.DataStore.onReady(function () {
           <button class="admin-icon-btn" data-hero-move="${i}" data-dir="1" title="Mover para depois" ${i === list.length - 1 ? 'disabled' : ''}><i data-lucide="arrow-right"></i></button>
           <button class="admin-icon-btn danger" data-hero-del="${i}" title="Remover"><i data-lucide="trash-2"></i></button>
         </div>
-      </div>`).join('') || '<p class="help">Nenhuma foto no banner ainda.</p>';
+      </div>`).join('') || '<p class="help">Nenhuma foto no banner ainda — enquanto isso, o site usa as fotos padrão.</p>';
     root.querySelectorAll('[data-hero-move]').forEach(b => b.addEventListener('click', () => {
       const i = +b.dataset.heroMove, j = i + (+b.dataset.dir);
       [list[i], list[j]] = [list[j], list[i]];
