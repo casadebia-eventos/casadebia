@@ -422,3 +422,4 @@
   pointer-events: none;
   z-index: -1;
 }
+.has-watermark.watermark-dark::before { background-image: url("../img/logo-escura.png"); opacity: 0.08; }
