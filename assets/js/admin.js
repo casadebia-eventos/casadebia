@@ -1720,7 +1720,10 @@ window.DataStore.onReady(function () {
       inp.addEventListener('change', () => {
         const idx = +inp.closest('[data-media-idx]').dataset.mediaIdx;
         const f = inp.dataset.mediaField;
-        data.media[idx][f] = inp.value;
+        const m = data.media[idx];
+        // Ao trocar a foto, a versão ampliada acompanha (a menos que tenha sido definida à parte)
+        if (f === 'src' && (!m.full || m.full === m.src || /unsplash\.com/.test(m.full))) m.full = inp.value;
+        m[f] = inp.value;
         persist();
         if (f === 'src' || f === 'poster' || f === 'size') renderGaleria();
       });
@@ -1861,7 +1864,7 @@ window.DataStore.onReady(function () {
       data.media = data.media || [];
       const cat = $('#uploadCategory')?.value || (window.DataStore.MEDIA_CATEGORIES || [])[0]?.id || 'estrutura';
       urls.slice().reverse().forEach((u, k) => data.media.unshift({
-        id: 'm-' + Date.now().toString(36) + k, category: cat, type: 'image', size: '', src: u, full: '', alt: ''
+        id: 'm-' + Date.now().toString(36) + k, category: cat, type: 'image', size: '', src: u, full: u, alt: ''
       }));
       persist();
       renderGaleria();
