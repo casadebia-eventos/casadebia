@@ -468,15 +468,15 @@
       try { return (window.DataStore?.loadData?.().config?.cloudinary) || {}; } catch { return {}; }
     };
     const renderRefPhotos = () => {
-      const sec = document.getElementById('decoRefSection');
+      const card = document.getElementById('decoRefCard');
       const thumbs = document.getElementById('decoRefThumbs');
       const btnText = document.getElementById('decoRefBtnText');
       const btn = document.getElementById('decoRefBtn');
-      if (!sec) return;
+      if (!card) return;
       const c = cloudCfgPublic();
-      const show = !!(c.cloudName && c.uploadPreset) && !!state.decoration?.type &&
-        (state.decoration?.enabled === true || isPremium());
-      sec.style.display = show ? '' : 'none';
+      const show = !!(c.cloudName && c.uploadPreset);
+      card.style.display = show ? '' : 'none';
+      card.classList.toggle('selected', hasRef());
       if (!show || !thumbs) return;
       thumbs.innerHTML = refPhotos().map((u, i) =>
         `<div class="deco-ref-thumb"><img src="${u.replace(/"/g, '')}" alt="Foto de referência ${i + 1}"><button type="button" data-ref-del="${i}" aria-label="Remover">×</button></div>`).join('');
@@ -485,7 +485,7 @@
         window.SIM.save(state);
         renderRefPhotos(); renderDecorationVisibility(); renderDecorationSummary(); renderBudget();
       }));
-      if (btnText) btnText.textContent = hasRef() ? 'Enviar outra foto' : 'Enviar foto de referência';
+      if (btnText) btnText.textContent = hasRef() ? 'Enviar outra' : 'Enviar foto';
       if (btn) btn.style.display = refPhotos().length >= MAX_REF ? 'none' : '';
     };
     const refInput = document.getElementById('decoRefInput');
@@ -578,7 +578,11 @@
         </button>
       `;}).join('');
 
-      decoCombosGrid.querySelectorAll('.deco-combo').forEach(btn => {
+      // Card "Tem a sua própria foto?" logo depois do último combo
+      const refCard = document.getElementById('decoRefCard');
+      if (refCard) { decoCombosGrid.appendChild(refCard); renderRefPhotos(); }
+
+      decoCombosGrid.querySelectorAll('.deco-combo[data-combo]').forEach(btn => {
         btn.addEventListener('click', (ev) => {
           const combo = filtered.find(x => x.id === btn.dataset.combo);
           if (!combo) return;

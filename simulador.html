@@ -197,23 +197,26 @@
                 <p class="deco-illustrative">📷 <strong>Fotos meramente ilustrativas.</strong> Cores, balões e itens podem variar conforme a sua escolha e a disponibilidade.</p>
               </div>
 
-              <!-- Foto de referência do cliente -->
-              <div class="deco-section" id="decoRefSection" style="display:none;">
-                <div class="deco-section-title">
-                  <span class="deco-section-num">📷</span>
-                  <div>
-                    <h3>Já tem uma foto de como quer sua decoração?</h3>
-                    <small>Opcional. Envie a imagem que você salvou (Instagram, Pinterest, Google...).</small>
+              <!-- Foto de referência do cliente: card no mesmo padrão dos combos,
+                   colocado pelo simulador logo depois do último combo -->
+              <div hidden>
+                <div class="deco-combo deco-ref-card" id="decoRefCard">
+                  <div class="deco-ref-cover" aria-hidden="true">
+                    <i data-lucide="image-plus"></i>
                   </div>
-                </div>
-                <div class="deco-ref-box">
-                  <p class="deco-ref-text">Nossa decoradora analisa a sua foto, indica o modelo mais parecido e te passa o valor pelo WhatsApp. Cores e detalhes podem ser ajustados com ela.</p>
-                  <div class="deco-ref-thumbs" id="decoRefThumbs"></div>
-                  <label class="btn btn-outline deco-ref-btn" id="decoRefBtn">
-                    <input type="file" id="decoRefInput" accept="image/*" multiple hidden>
-                    <span id="decoRefBtnText">Enviar foto de referência</span>
-                  </label>
-                  <small class="deco-ref-status" id="decoRefStatus"></small>
+                  <div class="deco-combo-body">
+                    <div class="deco-combo-name">Tem a sua própria foto?</div>
+                    <p class="deco-combo-desc">Não encontrou o que queria nos combos? Envie a foto da decoração que você salvou. Nossa decoradora analisa e te passa o valor pelo WhatsApp.</p>
+                    <div class="deco-ref-thumbs" id="decoRefThumbs"></div>
+                    <small class="deco-ref-status" id="decoRefStatus"></small>
+                    <div class="deco-combo-foot">
+                      <span class="deco-combo-price deco-ref-price">Valor após análise</span>
+                      <label class="deco-combo-view deco-ref-btn" id="decoRefBtn">
+                        <input type="file" id="decoRefInput" accept="image/*" multiple hidden>
+                        <i data-lucide="upload"></i><span id="decoRefBtnText">Enviar foto</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
 
