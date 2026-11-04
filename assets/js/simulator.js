@@ -406,7 +406,12 @@
 
     const renderDecorationCombos = () => {
       if (!decoCombosGrid) return;
-      const filtered = window.DECORATION_DATA.combos.filter(c => c.type === state.decoration?.type);
+      // Os combos são os mesmos para Pegue e Monte e Decoração Montada —
+      // o cliente só escolhe o modelo de montagem. (Cópias antigas marcadas como
+      // 'completa' são ignoradas quando existe a lista principal.)
+      const all = window.DECORATION_DATA.combos || [];
+      const shared = all.filter(c => c.type !== 'completa');
+      const filtered = shared.length ? shared : all;
 
       if (!filtered.length) {
         decoCombosGrid.innerHTML = '<div class="deco-combo-empty">Nenhum combo disponível para este tipo no momento.</div>';
@@ -714,8 +719,7 @@
     decoTypes.forEach(opt => {
       opt.addEventListener('click', () => {
         state.decoration.type = opt.dataset.decoType;
-        // Reset combo se mudar tipo
-        state.decoration.combo = null;
+        // Os combos são os mesmos nos dois modelos: mantém o combo já escolhido
         window.SIM.save(state);
         renderDecorationTypes();
         renderDecorationCombos();
@@ -1300,7 +1304,7 @@
         if (combo) {
           rows.push({
             strongLabel: combo.name,
-            label: combo.type === 'pegue-monte' ? 'Pegue e Monte' : 'Decoração Completa',
+            label: state.decoration.type === 'completa' ? 'Decoração Montada' : 'Pegue e Monte',
             value: window.SIM.formatBRL(combo.price)
           });
         }
@@ -1475,7 +1479,7 @@
         const combo = state.decoration?.combo ? DD.combos.find(c => c.id === state.decoration.combo) : null;
         if (combo) {
           lines.push(`🎨 *${combo.name}*`);
-          const typeLabel = combo.type === 'pegue-monte' ? 'Pegue e Monte' : 'Decoração Montada';
+          const typeLabel = state.decoration?.type === 'completa' ? 'Decoração Montada' : 'Pegue e Monte';
           lines.push(`${typeLabel} — ${fmt(combo.price)}`);
           lines.push('');
         } else if (isPremiumPkg) {

@@ -673,7 +673,7 @@ window.DataStore.onReady(function () {
             <img src="${c.image || ''}" class="admin-item-img" onerror="this.style.display='none'">
             <div class="admin-item-info">
               <h4>${c.name}</h4>
-              <p>${c.type === 'pegue-monte' ? 'Pegue e Monte' : 'Decoração Completa'} · ${c.description}</p>
+              <p>${c.type === 'completa' ? '(cópia antiga — pode excluir) · ' : ''}${c.description}</p>
             </div>
             <div class="admin-item-price">${formatBRL(c.price)}</div>
             <div class="admin-item-actions">
@@ -686,13 +686,6 @@ window.DataStore.onReady(function () {
               <div class="admin-field">
                 <label>Nome</label>
                 <input data-combo-field="name" data-idx="${idx}" value="${escapeAttr(c.name)}">
-              </div>
-              <div class="admin-field">
-                <label>Tipo</label>
-                <select data-combo-field="type" data-idx="${idx}">
-                  <option value="pegue-monte" ${c.type === 'pegue-monte' ? 'selected' : ''}>Pegue e Monte</option>
-                  <option value="completa" ${c.type === 'completa' ? 'selected' : ''}>Decoração Completa</option>
-                </select>
               </div>
               <div class="admin-field">
                 <label>Preço</label>

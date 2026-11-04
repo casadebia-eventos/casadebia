@@ -277,7 +277,7 @@
       if (state.decoration.combo) {
         const combo = window.DECORATION_DATA.combos.find(c => c.id === state.decoration.combo);
         if (combo) {
-          const typeLabel = combo.type === 'pegue-monte' ? 'Pegue e Monte' : 'Decoração Completa';
+          const typeLabel = state.decoration.type === 'completa' ? 'Decoração Montada' : 'Pegue e Monte';
           items.push({
             key: 'deco-combo',
             label: `Decoração: ${combo.name}`,
