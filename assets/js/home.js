@@ -96,6 +96,20 @@
       if (priceEl) priceEl.textContent = fmt(pk.price);
       const nameEl = card.querySelector('.pkg-name');
       if (nameEl && pk.name) nameEl.textContent = pk.name;
+
+      // Itens do pacote: os mesmos do painel (Pacotes → itens inclusos), iguais ao simulador
+      const featEl = card.querySelector('.pkg-features');
+      const items = (pk.includedItems || []).map(t => String(t || '').trim()).filter(Boolean);
+      if (featEl && items.length) {
+        const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        featEl.innerHTML = items.map(t => {
+          // "Tudo do Básico" → destaca o nome do plano, como antes
+          const m = t.match(/^(Tudo d[oa]s?\s+)(.+)$/i);
+          const html = m ? `${esc(m[1])}<strong>${esc(m[2])}</strong> incluído` : esc(t);
+          return `<li class="pkg-feature"><i data-lucide="check"></i><span>${html}</span></li>`;
+        }).join('');
+        if (window.lucide) window.lucide.createIcons();
+      }
     });
   });
 })();
