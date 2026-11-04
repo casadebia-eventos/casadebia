@@ -351,6 +351,8 @@
 }
 
 .whatsapp-float i { width: 30px; height: 30px; }
+.whatsapp-float-logo { width: 34px; height: 34px; display: block; }
+@media (min-width: 768px) { .whatsapp-float-logo { width: 36px; height: 36px; } }
 
 .whatsapp-float::before {
   content: '';
