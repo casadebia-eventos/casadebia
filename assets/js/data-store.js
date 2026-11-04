@@ -125,6 +125,9 @@
           '1 LED de letra ou idade'
         ], image: '' }
       },
+      // Regra de preço dos combos: valor cheio − valor de decoração embutido no plano.
+      // Planos em "manual" (Pro Max) têm preço próprio digitado em cada combo.
+      pricing: { credits: { basico: 0, essencial: 0, premium: 300 }, manual: ['promax'] },
       // Temas do evento (cards com foto). packages = planos onde aparece (vazio = todos)
       themes: [],
       // (antigo) mantido só para compatibilidade com dados salvos antes

@@ -601,6 +601,7 @@ window.DataStore.onReady(function () {
 
   // ===== DECORAÇÃO =====
   function renderDecoracao() {
+    renderPricingRule();
     renderCombos();
     renderAddons();
     renderPromaxIncluded();
@@ -743,7 +744,9 @@ window.DataStore.onReady(function () {
     const list = inp.dataset.ppKind === 'combo' ? data.decoration.combos : data.balloons;
     const item = list[+inp.dataset.ppIdx];
     if (!item) return;
-    if (!item.pricesByPackage || !Object.keys(item.pricesByPackage).length) {
+    if (inp.dataset.ppKind === 'combo') {
+      item.pricesByPackage = item.pricesByPackage || {};
+    } else if (!item.pricesByPackage || !Object.keys(item.pricesByPackage).length) {
       // Primeira edição: começa a tabela com o preço geral em todos os planos
       item.pricesByPackage = {};
       Object.keys(data.packages || {}).forEach(k => { item.pricesByPackage[k] = Number(item.price) || 0; });
@@ -751,6 +754,79 @@ window.DataStore.onReady(function () {
     item.pricesByPackage[inp.dataset.ppPkg] = inp.value === '' ? null : (parseFloat(inp.value) || 0);
     persist();
   });
+
+  // ===== REGRA DE PREÇO DOS COMBOS =====
+  function pricingRule() {
+    const D = data.decoration;
+    if (!D.pricing) D.pricing = { credits: { basico: 0, essencial: 0, premium: 300 }, manual: ['promax'] };
+    D.pricing.credits = D.pricing.credits || {};
+    D.pricing.manual = D.pricing.manual || [];
+    return D.pricing;
+  }
+  function comboPriceFor(c, pkgId) {
+    const pr = pricingRule();
+    if (pr.manual.includes(pkgId)) {
+      const v = c.pricesByPackage ? c.pricesByPackage[pkgId] : undefined;
+      return (v === null || v === undefined || v === '') ? null : (Number(v) || 0);
+    }
+    return Math.max(0, (Number(c.price) || 0) - (Number(pr.credits[pkgId]) || 0));
+  }
+  function comboPriceHTML(idx, c) {
+    const pr = pricingRule();
+    const pkgs = Object.values(data.packages || {});
+    const auto = pkgs.filter(p => !pr.manual.includes(p.id));
+    const manual = pkgs.filter(p => pr.manual.includes(p.id));
+    return `
+      <div class="admin-field" style="margin-top: var(--space-4);">
+        <label>Valor cheio da decoração</label>
+        <div class="admin-field-prefix" style="max-width:220px;">
+          <span class="prefix">R$</span>
+          <input type="number" min="0" step="0.01" data-combo-field="price" data-idx="${idx}" value="${Number(c.price) || 0}">
+        </div>
+        <div class="combo-price-preview">
+          ${auto.map(p => {
+            const v = comboPriceFor(c, p.id);
+            const cr = Number(pr.credits[p.id]) || 0;
+            return `<span><strong>${escapeAttr(p.name)}:</strong> ${formatBRL(v)}${cr ? ` <small>(cheio − ${formatBRL(cr)} embutido)</small>` : ''}</span>`;
+          }).join('')}
+        </div>
+        <span class="help">Os preços acima se calculam sozinhos a partir do valor cheio.</span>
+      </div>
+      ${manual.map(p => {
+        const v = c.pricesByPackage ? c.pricesByPackage[p.id] : undefined;
+        return `
+        <div class="admin-field" style="margin-top: var(--space-3);">
+          <label>${escapeAttr(p.name)} <small>(regra própria — em branco = não aparece no ${escapeAttr(p.name)})</small></label>
+          <div class="admin-field-prefix" style="max-width:220px;">
+            <span class="prefix">R$</span>
+            <input type="number" min="0" step="0.01" placeholder="não oferece" data-pp-kind="combo" data-pp-idx="${idx}" data-pp-pkg="${p.id}" value="${v === null || v === undefined || v === '' ? '' : v}">
+          </div>
+        </div>`;
+      }).join('')}`;
+  }
+  function renderPricingRule() {
+    const root = $('#pricingRuleRoot');
+    if (!root) return;
+    const pr = pricingRule();
+    const pkgs = Object.values(data.packages || {});
+    root.innerHTML = `
+      <div class="plan-price-table">
+        ${pkgs.filter(p => !pr.manual.includes(p.id)).map(p => `
+          <label class="plan-price-cell">
+            <span>${escapeAttr(p.name)}</span>
+            <div class="admin-field-prefix"><span class="prefix">R$</span>
+              <input type="number" min="0" step="0.01" data-credit-pkg="${p.id}" value="${Number(pr.credits[p.id]) || 0}">
+            </div>
+          </label>`).join('')}
+      </div>
+      <span class="help">Quanto de decoração já está embutido no preço de cada plano. O cliente paga <strong>valor cheio − esse valor</strong> (nunca menos que R$ 0). Ex.: Premium com R$ 300 embutido → Prata de R$ 300 sai por R$ 0.
+      ${pr.manual.length ? `<br>${pr.manual.map(id => escapeAttr(data.packages[id]?.name || id)).join(', ')}: regra própria, definida em cada combo.` : ''}</span>`;
+    root.querySelectorAll('[data-credit-pkg]').forEach(inp => inp.addEventListener('change', () => {
+      pr.credits[inp.dataset.creditPkg] = parseFloat(inp.value) || 0;
+      persist();
+      renderCombos();
+    }));
+  }
 
   function renderCombos() {
     const root = $('#combosRoot');
@@ -765,7 +841,7 @@ window.DataStore.onReady(function () {
               <h4>${c.name}</h4>
               <p>${c.type === 'completa' ? '(cópia antiga — pode excluir) · ' : ''}${c.description}</p>
             </div>
-            <div class="admin-item-price">${c.pricesByPackage && Object.keys(c.pricesByPackage).length ? 'por plano' : formatBRL(c.price)}</div>
+            <div class="admin-item-price">${formatBRL(c.price)}<small style="display:block;font-size:.7em;opacity:.7;font-weight:500;">valor cheio</small></div>
             <div class="admin-item-actions">
               <button class="admin-icon-btn" data-toggle aria-label="Editar"><i data-lucide="chevron-down"></i></button>
               <button class="admin-icon-btn danger" data-delete-combo="${idx}" aria-label="Excluir"><i data-lucide="trash-2"></i></button>
@@ -782,7 +858,7 @@ window.DataStore.onReady(function () {
                 <input data-combo-field="category" data-idx="${idx}" value="${escapeAttr(c.category || '')}">
               </div>
             </div>
-            ${planPriceTableHTML('combo', idx, c)}
+            ${comboPriceHTML(idx, c)}
             <div class="admin-field" style="margin-top: var(--space-4);">
               <label>Descrição</label>
               <textarea data-combo-field="description" data-idx="${idx}" rows="4">${escapeAttr(c.description)}</textarea>

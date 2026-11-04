@@ -1328,3 +1328,6 @@ body.admin-body {
 .plan-price-table { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 @media (min-width: 900px) { .plan-price-table { grid-template-columns: repeat(4, 1fr); } }
 .plan-price-cell { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 600; }
+
+.combo-price-preview { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: .9rem; }
+.combo-price-preview small { opacity: .7; }

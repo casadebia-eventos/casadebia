@@ -231,8 +231,26 @@
   // ===== PREÇO POR PLANO (combos e balões) =====
   // Cada combo/balão pode ter um preço diferente em cada plano (pricesByPackage).
   // Sem tabela → usa o preço geral. Com tabela e o plano em branco → não aparece nesse plano.
+  // Regra dos COMBOS (decoration.pricing):
+  //  - cada combo tem um VALOR CHEIO (combo.price);
+  //  - cada plano pode ter um valor de decoração já embutido no preço do plano
+  //    (credits: Premium = 300) → o cliente paga valor cheio − embutido (nunca menos que 0);
+  //  - planos com regra própria (manual, ex.: Pro Max) usam o valor digitado para aquele plano
+  //    (em branco = não aparece).
+  const comboPrice = (item, pkg, pricing) => {
+    const manual = pricing.manual || [];
+    if (manual.includes(pkg)) {
+      const v = item.pricesByPackage ? item.pricesByPackage[pkg] : undefined;
+      return (v === null || v === undefined || v === '') ? null : (Number(v) || 0);
+    }
+    const credit = Number((pricing.credits || {})[pkg]) || 0;
+    return Math.max(0, (Number(item.price) || 0) - credit);
+  };
+
   const priceFor = (item, pkg) => {
     if (!item) return null;
+    const DD = window.DECORATION_DATA || {};
+    if (pkg && DD.pricing && (DD.combos || []).includes(item)) return comboPrice(item, pkg, DD.pricing);
     const t = item.pricesByPackage;
     if (!pkg || !t || typeof t !== 'object' || !Object.keys(t).length) return Number(item.price) || 0;
     const v = t[pkg];
