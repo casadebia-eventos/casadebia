@@ -75,7 +75,11 @@
         case 1: return !!state.date;
         case 2: return !!state.package;
         case 3: {
-          if (window.SIM_PRICING.packages[state.package]?.includesDecoration) return true;
+          // Pacotes com decoração inclusa (Premium, Pro Max...): precisa escolher
+          // o modelo de montagem e o combo — senão o pedido chega sem a decoração.
+          if (window.SIM_PRICING.packages[state.package]?.includesDecoration) {
+            return !!state.decoration?.type && !!state.decoration?.combo;
+          }
           if (state.decoration?.enabled === false) return true;
           if (state.decoration?.enabled === true) {
             return !!state.decoration.type && !!state.decoration.combo;
@@ -1604,7 +1608,23 @@
       return lines.join('\n').replace(/\n{3,}/g, '\n\n');
     };
 
+    // Se o cliente escolheu um combo e não escolheu balões, marca sozinho o
+    // modelo de R$ 0 (balões clássicos, já inclusos no valor do combo).
+    const autoPickBalloon = () => {
+      const d = state.decoration;
+      if (!d || d.enabled !== true || !d.combo || d.balloon) return;
+      const free = (window.BALLOONS_DATA || []).find(b => Number(b.price) === 0);
+      if (!free) return;
+      d.balloon = free.id;
+      d.balloonAuto = true;
+      window.SIM.save(state);
+      renderBalloons();
+      renderDecorationSummary();
+      renderBudget();
+    };
+
     const sendToWhatsapp = () => {
+      autoPickBalloon();
       // Validação
       if (!state.customer?.name || state.customer.name.trim().length < 3) {
         showValidationError('Volte para a Etapa 7 e informe seu nome.');
@@ -1669,9 +1689,11 @@
         const msgs = {
           1: 'Selecione a data do evento.',
           2: 'Selecione um pacote para continuar.',
-          3: state.decoration?.enabled === true
-              ? 'Escolha o tipo e um combo de decoração.'
-              : 'Indique se deseja decoração.',
+          3: state.decoration?.enabled !== true
+              ? 'Indique se deseja decoração.'
+              : !state.decoration?.type
+                ? 'Escolha como quer a decoração: Pegue e Monte ou Decoração Montada.'
+                : 'Escolha um combo de decoração para continuar.',
           4: 'Informe o número de convidados.',
           5: 'Escolha se deseja usar gás.',
           7: 'Preencha seu nome (mín. 3 letras) e um WhatsApp válido.'
@@ -1679,6 +1701,7 @@
         showValidationError(msgs[state.currentStep] || 'Complete a etapa para avançar.');
         return;
       }
+      if (state.currentStep === 3) autoPickBalloon();
       showStep(state.currentStep + 1);
     });
 
