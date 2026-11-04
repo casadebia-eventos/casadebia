@@ -739,6 +739,20 @@ window.DataStore.onReady(function () {
       </div>`;
   }
   document.addEventListener('change', (e) => {
+    const chk = e.target.closest && e.target.closest('[data-combo-plan]');
+    if (!chk) return;
+    const idx = +chk.dataset.idx;
+    const c = data.decoration.combos[idx];
+    if (!c) return;
+    const box = chk.closest('.combo-plans');
+    const picked = [...box.querySelectorAll('[data-combo-plan]:checked')].map(x => x.dataset.comboPlan);
+    c.plans = picked.length === Object.keys(data.packages || {}).length ? [] : picked;
+    persist();
+    const wasOpen = $(`#combosRoot [data-combo-idx="${idx}"]`)?.classList.contains('open');
+    renderPricingRule(); renderCombos();
+    if (wasOpen) $(`#combosRoot [data-combo-idx="${idx}"]`)?.classList.add('open');
+  });
+  document.addEventListener('change', (e) => {
     const inp = e.target.closest && e.target.closest('[data-pp-kind]');
     if (!inp) return;
     const list = inp.dataset.ppKind === 'combo' ? data.decoration.combos : data.balloons;
@@ -776,9 +790,18 @@ window.DataStore.onReady(function () {
     return Math.max(0, (Number(pr.base) || 0) + diff);
   }
   // Dentro de cada combo fica só o preço do Pro Max (regra própria)
+  const comboOffered = (c, pkgId) => !Array.isArray(c.plans) || !c.plans.length || c.plans.includes(pkgId);
   function comboPriceHTML(idx, c) {
     const pr = pricingRule();
-    return Object.values(data.packages || {}).filter(p => pr.manual.includes(p.id)).map(p => {
+    const all = Object.values(data.packages || {});
+    const plansHTML = `
+        <div class="admin-field" style="margin-top: var(--space-4);">
+          <label>Aparece nos planos</label>
+          <div class="combo-plans">
+            ${all.map(p => `<label><input type="checkbox" data-combo-plan="${p.id}" data-idx="${idx}" ${comboOffered(c, p.id) ? 'checked' : ''}> ${escapeAttr(p.name)}</label>`).join('')}
+          </div>
+        </div>`;
+    return plansHTML + all.filter(p => pr.manual.includes(p.id) && comboOffered(c, p.id)).map(p => {
       const v = c.pricesByPackage ? c.pricesByPackage[p.id] : undefined;
       return `
         <div class="admin-field" style="margin-top: var(--space-4);">
@@ -794,8 +817,9 @@ window.DataStore.onReady(function () {
     const root = $('#pricingRuleRoot');
     if (!root) return;
     const pr = pricingRule();
-    const combos = (data.decoration.combos || []).filter(c => c.type !== 'completa');
     const pkgs = Object.values(data.packages || {}).filter(p => !pr.manual.includes(p.id));
+    // Só combos oferecidos em algum plano que segue a regra (ex.: Diamond Plus é só do Pro Max)
+    const combos = (data.decoration.combos || []).filter(c => c.type !== 'completa' && pkgs.some(p => comboOffered(c, p.id)));
     const noDeco = pkgs.filter(p => !pr.baseIncluded.includes(p.id)).map(p => p.name).join(' / ');
     const withBase = pkgs.filter(p => pr.baseIncluded.includes(p.id)).map(p => p.name).join(' / ');
     root.innerHTML = `
@@ -855,7 +879,7 @@ window.DataStore.onReady(function () {
               <h4>${c.name}</h4>
               <p>${c.type === 'completa' ? '(cópia antiga — pode excluir) · ' : ''}${c.description}</p>
             </div>
-            <div class="admin-item-price">+ ${formatBRL(Number(c.diff) || 0)}<small style="display:block;font-size:.7em;opacity:.7;font-weight:500;">sobre o base</small></div>
+            <div class="admin-item-price">${Array.isArray(c.plans) && c.plans.length ? `<small style="display:block;font-size:.75em;font-weight:600;">Só ${c.plans.map(id => escapeAttr(data.packages[id]?.name || id)).join(', ')}</small>` : `+ ${formatBRL(Number(c.diff) || 0)}<small style="display:block;font-size:.7em;opacity:.7;font-weight:500;">sobre o base</small>`}</div>
             <div class="admin-item-actions">
               <button class="admin-icon-btn" data-toggle aria-label="Editar"><i data-lucide="chevron-down"></i></button>
               <button class="admin-icon-btn danger" data-delete-combo="${idx}" aria-label="Excluir"><i data-lucide="trash-2"></i></button>

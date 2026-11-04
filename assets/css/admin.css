@@ -1346,3 +1346,6 @@ body.admin-body {
 .deco-price-result th, .deco-price-result td { padding: 8px 14px; text-align: left; border-bottom: 1px solid var(--border, #e7dfd2); }
 .deco-price-result th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
 .deco-price-result td:first-child { font-weight: 600; }
+
+.combo-plans { display: flex; flex-wrap: wrap; gap: 10px 20px; }
+.combo-plans label { display: flex; align-items: center; gap: 6px; font-weight: 500; white-space: nowrap; }

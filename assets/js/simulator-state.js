@@ -239,6 +239,8 @@
   //  - planos com regra própria (pricing.manual, ex.: Pro Max) usam o valor digitado
   //    no combo para aquele plano (em branco = não aparece).
   const comboPrice = (item, pkg, pricing) => {
+    // Combo só aparece nos planos marcados (vazio = todos)
+    if (Array.isArray(item.plans) && item.plans.length && !item.plans.includes(pkg)) return null;
     if ((pricing.manual || []).includes(pkg)) {
       const v = item.pricesByPackage ? item.pricesByPackage[pkg] : undefined;
       return (v === null || v === undefined || v === '') ? null : (Number(v) || 0);
