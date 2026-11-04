@@ -214,7 +214,8 @@
     const guestInfo = document.getElementById('guestInfo');
 
     const updateGuestUI = () => {
-      if (guestInput) guestInput.value = state.guests || 0;
+      if (guestInput && document.activeElement !== guestInput) guestInput.value = state.guests || '';
+      renderGuestQuick();
       if (guestMinus) guestMinus.disabled = state.guests <= 0;
       if (guestPlus) guestPlus.disabled = state.guests >= maxGuests();
 
@@ -255,6 +256,25 @@
     };
     if (guestInput) guestInput.max = maxGuests();
 
+    // Atalhos de quantidade (para ninguém precisar apertar "+" 100 vezes)
+    const guestQuickList = document.querySelector('#guestQuick .sim-guest-quick-list');
+    const renderGuestQuick = () => {
+      if (!guestQuickList) return;
+      const max = maxGuests();
+      const opts = [20, 50, 80, 100, 150, 200].filter(n => n <= max);
+      guestQuickList.innerHTML = opts.map(n =>
+        `<button type="button" class="sim-guest-chip ${state.guests === n ? 'selected' : ''}" data-guests="${n}">${n}</button>`
+      ).join('');
+      guestQuickList.querySelectorAll('[data-guests]').forEach(b =>
+        b.addEventListener('click', () => { if (guestInput) guestInput.value = b.dataset.guests; setGuests(b.dataset.guests); })
+      );
+    };
+    if (guestInput) {
+      // Ao tocar no número, seleciona tudo para já digitar por cima
+      guestInput.addEventListener('focus', () => setTimeout(() => guestInput.select(), 0));
+      guestInput.addEventListener('blur', () => { guestInput.value = state.guests || ''; });
+    }
+
     const setGuests = (n) => {
       const max = maxGuests();
       const wanted = parseInt(n, 10) || 0;
@@ -277,8 +297,8 @@
       renderBudget();
     };
 
-    if (guestMinus) guestMinus.addEventListener('click', () => setGuests(state.guests - 1));
-    if (guestPlus) guestPlus.addEventListener('click', () => setGuests(state.guests + 1));
+    if (guestMinus) guestMinus.addEventListener('click', () => { if (guestInput) guestInput.value = Math.max(0, state.guests - 1) || ''; setGuests(state.guests - 1); });
+    if (guestPlus) guestPlus.addEventListener('click', () => { if (guestInput) guestInput.value = state.guests + 1; setGuests(state.guests + 1); });
     if (guestInput) guestInput.addEventListener('input', (e) => setGuests(e.target.value));
 
     // ===== ETAPA 3 — GÁS =====

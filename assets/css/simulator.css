@@ -298,11 +298,44 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+.sim-counter-wrap { max-width: 480px; margin: var(--space-5) auto; text-align: center; }
+.sim-counter-wrap .sim-counter { margin: var(--space-2) auto var(--space-4); }
+.sim-counter-label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--dark);
+}
+.sim-counter-field { position: relative; display: flex; flex-direction: column; align-items: center; }
+.sim-counter-edit {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  letter-spacing: .04em;
+  color: var(--gold-dark, #7E5818);
+  pointer-events: none;
+}
+.sim-guest-quick-label { display: block; font-size: var(--fs-sm); color: var(--text-muted, #6b6259); margin-bottom: var(--space-2); }
+.sim-guest-quick-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.sim-guest-chip {
+  min-width: 56px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--gold);
+  background: var(--white);
+  color: var(--dark);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.sim-guest-chip:hover, .sim-guest-chip.selected { background: var(--gold); color: var(--white); }
 .sim-counter-input {
-  width: 120px;
-  height: 72px;
-  border: none;
-  background: transparent;
+  width: 140px;
+  height: 80px;
+  border: 2px solid var(--gold);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,.08);
+  cursor: text;
   text-align: center;
   font-family: var(--font-display);
   font-size: 3.5rem;
@@ -311,6 +344,8 @@
   outline: none;
   -moz-appearance: textfield;
 }
+.sim-counter-input:focus { border-color: var(--gold-dark, #7E5818); box-shadow: 0 0 0 4px rgba(169,120,42,.2); }
+.sim-counter-input::placeholder { color: rgba(0,0,0,.25); }
 .sim-counter-input::-webkit-outer-spin-button,
 .sim-counter-input::-webkit-inner-spin-button {
   -webkit-appearance: none;

@@ -76,10 +76,20 @@
               <p class="sim-step-desc" id="guestStepDesc">Informe o número aproximado de pessoas. Para o Básico, cobramos R$ 15 por convidado acima de 20.</p>
             </header>
 
-            <div class="sim-counter">
-              <button class="sim-counter-btn" id="guestMinus" type="button" aria-label="Diminuir">−</button>
-              <input type="number" id="guestInput" class="sim-counter-input" min="0" max="500" value="0" aria-label="Número de convidados">
-              <button class="sim-counter-btn" id="guestPlus" type="button" aria-label="Aumentar">+</button>
+            <div class="sim-counter-wrap">
+              <label class="sim-counter-label" for="guestInput">Toque no número e digite a quantidade</label>
+              <div class="sim-counter">
+                <button class="sim-counter-btn" id="guestMinus" type="button" aria-label="Diminuir">−</button>
+                <div class="sim-counter-field">
+                  <input type="number" id="guestInput" class="sim-counter-input" min="0" max="500" value="" placeholder="0" inputmode="numeric" pattern="[0-9]*" aria-label="Número de convidados">
+                  <span class="sim-counter-edit" aria-hidden="true">✎ digitar</span>
+                </div>
+                <button class="sim-counter-btn" id="guestPlus" type="button" aria-label="Aumentar">+</button>
+              </div>
+              <div class="sim-guest-quick" id="guestQuick" aria-label="Atalhos de quantidade">
+                <span class="sim-guest-quick-label">ou escolha um número aproximado:</span>
+                <div class="sim-guest-quick-list"></div>
+              </div>
             </div>
 
             <div class="sim-info-bar" id="guestInfo" style="display:none;"></div>
