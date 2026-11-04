@@ -1334,3 +1334,15 @@ body.admin-body {
 
 #pricingRuleRoot .help, .plan-price-table + .help { display: block; margin-top: 12px; line-height: 1.5; }
 .plan-price-cell.admin-field { margin: 0; }
+
+/* Preço das decorações */
+.deco-price-box { display: flex; flex-direction: column; gap: 10px; max-width: 420px; }
+.deco-price-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 12px; }
+.deco-price-name { font-weight: 600; }
+.deco-price-base .deco-price-name { color: var(--gold-dark, #A9782A); }
+.deco-price-row input { width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--border, #e7dfd2); border-radius: 10px; font-size: 1rem; background: #fff; }
+.deco-price-row:not(.deco-price-base) input { padding-left: 56px; }
+.deco-price-result { margin-top: 18px; border-collapse: collapse; min-width: 320px; font-size: .95rem; }
+.deco-price-result th, .deco-price-result td { padding: 8px 14px; text-align: left; border-bottom: 1px solid var(--border, #e7dfd2); }
+.deco-price-result th { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+.deco-price-result td:first-child { font-weight: 600; }

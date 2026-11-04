@@ -232,19 +232,20 @@
   // Cada combo/balão pode ter um preço diferente em cada plano (pricesByPackage).
   // Sem tabela → usa o preço geral. Com tabela e o plano em branco → não aparece nesse plano.
   // Regra dos COMBOS (decoration.pricing):
-  //  - cada combo tem um VALOR CHEIO (combo.price);
-  //  - cada plano pode ter um valor de decoração já embutido no preço do plano
-  //    (credits: Premium = 300) → o cliente paga valor cheio − embutido (nunca menos que 0);
-  //  - planos com regra própria (manual, ex.: Pro Max) usam o valor digitado para aquele plano
-  //    (em branco = não aparece).
+  //  - VALOR BASE (pricing.base) = custo da decoração mais simples (Prata);
+  //  - cada combo tem uma DIFERENÇA sobre o base (combo.diff: Prata 0, Gold +150...);
+  //  - planos sem decoração (Básico/Essencial) pagam base + diferença;
+  //  - planos com o base embutido (pricing.baseIncluded, ex.: Premium) pagam só a diferença;
+  //  - planos com regra própria (pricing.manual, ex.: Pro Max) usam o valor digitado
+  //    no combo para aquele plano (em branco = não aparece).
   const comboPrice = (item, pkg, pricing) => {
-    const manual = pricing.manual || [];
-    if (manual.includes(pkg)) {
+    if ((pricing.manual || []).includes(pkg)) {
       const v = item.pricesByPackage ? item.pricesByPackage[pkg] : undefined;
       return (v === null || v === undefined || v === '') ? null : (Number(v) || 0);
     }
-    const credit = Number((pricing.credits || {})[pkg]) || 0;
-    return Math.max(0, (Number(item.price) || 0) - credit);
+    const diff = Number(item.diff) || 0;
+    if ((pricing.baseIncluded || []).includes(pkg)) return Math.max(0, diff);
+    return Math.max(0, (Number(pricing.base) || 0) + diff);
   };
 
   const priceFor = (item, pkg) => {

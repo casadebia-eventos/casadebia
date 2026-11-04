@@ -755,11 +755,13 @@ window.DataStore.onReady(function () {
     persist();
   });
 
-  // ===== REGRA DE PREÇO DOS COMBOS =====
+  // ===== PREÇO DAS DECORAÇÕES: valor base + diferença de cada combo =====
   function pricingRule() {
     const D = data.decoration;
-    if (!D.pricing) D.pricing = { credits: { basico: 0, essencial: 0, premium: 300 }, manual: ['promax'] };
-    D.pricing.credits = D.pricing.credits || {};
+    if (!D.pricing || D.pricing.base === undefined) {
+      D.pricing = { base: 300, baseIncluded: ['premium'], manual: ['promax'] };
+    }
+    D.pricing.baseIncluded = D.pricing.baseIncluded || [];
     D.pricing.manual = D.pricing.manual || [];
     return D.pricing;
   }
@@ -769,63 +771,75 @@ window.DataStore.onReady(function () {
       const v = c.pricesByPackage ? c.pricesByPackage[pkgId] : undefined;
       return (v === null || v === undefined || v === '') ? null : (Number(v) || 0);
     }
-    return Math.max(0, (Number(c.price) || 0) - (Number(pr.credits[pkgId]) || 0));
+    const diff = Number(c.diff) || 0;
+    if (pr.baseIncluded.includes(pkgId)) return Math.max(0, diff);
+    return Math.max(0, (Number(pr.base) || 0) + diff);
   }
+  // Dentro de cada combo fica só o preço do Pro Max (regra própria)
   function comboPriceHTML(idx, c) {
     const pr = pricingRule();
-    const pkgs = Object.values(data.packages || {});
-    const auto = pkgs.filter(p => !pr.manual.includes(p.id));
-    const manual = pkgs.filter(p => pr.manual.includes(p.id));
-    return `
-      <div class="admin-field" style="margin-top: var(--space-4);">
-        <label>Valor cheio da decoração</label>
-        <div class="admin-field-prefix" style="max-width:220px;">
-          <span class="prefix">R$</span>
-          <input type="number" min="0" step="0.01" data-combo-field="price" data-idx="${idx}" value="${Number(c.price) || 0}">
-        </div>
-        <div class="combo-price-preview">
-          ${auto.map(p => {
-            const v = comboPriceFor(c, p.id);
-            const cr = Number(pr.credits[p.id]) || 0;
-            return `<span><strong>${escapeAttr(p.name)}:</strong> ${formatBRL(v)}${cr ? ` <small>(cheio − ${formatBRL(cr)} embutido)</small>` : ''}</span>`;
-          }).join('')}
-        </div>
-        <span class="help">Os preços acima se calculam sozinhos a partir do valor cheio.</span>
-      </div>
-      ${manual.map(p => {
-        const v = c.pricesByPackage ? c.pricesByPackage[p.id] : undefined;
-        return `
-        <div class="admin-field" style="margin-top: var(--space-3);">
-          <label>${escapeAttr(p.name)} <small>(regra própria — em branco = não aparece no ${escapeAttr(p.name)})</small></label>
+    return Object.values(data.packages || {}).filter(p => pr.manual.includes(p.id)).map(p => {
+      const v = c.pricesByPackage ? c.pricesByPackage[p.id] : undefined;
+      return `
+        <div class="admin-field" style="margin-top: var(--space-4);">
+          <label>Preço no ${escapeAttr(p.name)} <small>(em branco = não aparece no ${escapeAttr(p.name)})</small></label>
           <div class="admin-field-prefix" style="max-width:220px;">
             <span class="prefix">R$</span>
-            <input type="number" min="0" step="0.01" placeholder="não oferece" data-pp-kind="combo" data-pp-idx="${idx}" data-pp-pkg="${p.id}" value="${v === null || v === undefined || v === '' ? '' : v}">
+            <input type="number" min="0" step="0.01" placeholder="não aparece" data-pp-kind="combo" data-pp-idx="${idx}" data-pp-pkg="${p.id}" value="${v === null || v === undefined || v === '' ? '' : v}">
           </div>
         </div>`;
-      }).join('')}`;
+    }).join('');
   }
   function renderPricingRule() {
     const root = $('#pricingRuleRoot');
     if (!root) return;
     const pr = pricingRule();
-    const pkgs = Object.values(data.packages || {});
+    const combos = (data.decoration.combos || []).filter(c => c.type !== 'completa');
+    const pkgs = Object.values(data.packages || {}).filter(p => !pr.manual.includes(p.id));
+    const noDeco = pkgs.filter(p => !pr.baseIncluded.includes(p.id)).map(p => p.name).join(' / ');
+    const withBase = pkgs.filter(p => pr.baseIncluded.includes(p.id)).map(p => p.name).join(' / ');
     root.innerHTML = `
-      <div class="plan-price-table">
-        ${pkgs.filter(p => !pr.manual.includes(p.id)).map(p => `
-          <label class="plan-price-cell admin-field">
-            <span>${escapeAttr(p.name)}</span>
-            <div class="admin-field-prefix"><span class="prefix">R$</span>
-              <input type="number" min="0" step="0.01" data-credit-pkg="${p.id}" value="${Number(pr.credits[p.id]) || 0}">
-            </div>
-          </label>`).join('')}
+      <div class="deco-price-box">
+        <div class="deco-price-row deco-price-base">
+          <span class="deco-price-name">Valor base</span>
+          <div class="admin-field-prefix"><span class="prefix">R$</span>
+            <input type="number" min="0" step="0.01" data-pr-base value="${Number(pr.base) || 0}"></div>
+        </div>
+        ${combos.map(c => {
+          const i = data.decoration.combos.indexOf(c);
+          return `
+          <div class="deco-price-row">
+            <span class="deco-price-name">${escapeAttr((c.name || '').replace(/^Combo\s*-?\s*/i, '') || 'Combo')}</span>
+            <div class="admin-field-prefix"><span class="prefix">+ R$</span>
+              <input type="number" min="0" step="0.01" data-pr-diff="${i}" value="${Number(c.diff) || 0}"></div>
+          </div>`;
+        }).join('')}
       </div>
-      <span class="help">Quanto de decoração já está embutido no preço de cada plano. O cliente paga <strong>valor cheio − esse valor</strong> (nunca menos que R$ 0). Ex.: Premium com R$ 300 embutido → Prata de R$ 300 sai por R$ 0.
-      ${pr.manual.length ? `<br>${pr.manual.map(id => escapeAttr(data.packages[id]?.name || id)).join(', ')}: regra própria, definida em cada combo.` : ''}</span>`;
-    root.querySelectorAll('[data-credit-pkg]').forEach(inp => inp.addEventListener('change', () => {
-      pr.credits[inp.dataset.creditPkg] = parseFloat(inp.value) || 0;
-      persist();
-      renderCombos();
+      <table class="deco-price-result">
+        <thead><tr><th></th><th>${escapeAttr(noDeco)}</th>${withBase ? `<th>${escapeAttr(withBase)}</th>` : ''}</tr></thead>
+        <tbody>
+          ${combos.map(c => `<tr>
+            <td>${escapeAttr((c.name || '').replace(/^Combo\s*-?\s*/i, ''))}</td>
+            <td>${formatBRL((Number(pr.base) || 0) + (Number(c.diff) || 0))}</td>
+            ${withBase ? `<td>${formatBRL(Math.max(0, Number(c.diff) || 0))}</td>` : ''}
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <span class="help">Você muda só os campos de cima. A tabela mostra quanto o cliente paga.${withBase ? ` O ${escapeAttr(withBase)} já tem o valor base no preço do plano, por isso paga só a diferença.` : ''}</span>`;
+    root.querySelector('[data-pr-base]')?.addEventListener('change', (e) => {
+      pr.base = parseFloat(e.target.value) || 0;
+      syncComboPrices(); persist(); renderPricingRule(); renderCombos();
+    });
+    root.querySelectorAll('[data-pr-diff]').forEach(inp => inp.addEventListener('change', () => {
+      const c = data.decoration.combos[+inp.dataset.prDiff];
+      if (c) c.diff = parseFloat(inp.value) || 0;
+      syncComboPrices(); persist(); renderPricingRule(); renderCombos();
     }));
+  }
+  // Mantém combo.price (valor total) igual a base + diferença
+  function syncComboPrices() {
+    const pr = pricingRule();
+    (data.decoration.combos || []).forEach(c => { c.price = (Number(pr.base) || 0) + (Number(c.diff) || 0); });
   }
 
   function renderCombos() {
@@ -841,7 +855,7 @@ window.DataStore.onReady(function () {
               <h4>${c.name}</h4>
               <p>${c.type === 'completa' ? '(cópia antiga — pode excluir) · ' : ''}${c.description}</p>
             </div>
-            <div class="admin-item-price">${formatBRL(c.price)}<small style="display:block;font-size:.7em;opacity:.7;font-weight:500;">valor cheio</small></div>
+            <div class="admin-item-price">+ ${formatBRL(Number(c.diff) || 0)}<small style="display:block;font-size:.7em;opacity:.7;font-weight:500;">sobre o base</small></div>
             <div class="admin-item-actions">
               <button class="admin-icon-btn" data-toggle aria-label="Editar"><i data-lucide="chevron-down"></i></button>
               <button class="admin-icon-btn danger" data-delete-combo="${idx}" aria-label="Excluir"><i data-lucide="trash-2"></i></button>
