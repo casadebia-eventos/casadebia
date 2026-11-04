@@ -727,7 +727,7 @@ window.DataStore.onReady(function () {
         <div class="plan-price-table">
           ${pkgs.map(p => {
             const v = hasTable ? t[p.id] : item.price;
-            return `<label class="plan-price-cell">
+            return `<label class="plan-price-cell admin-field">
               <span>${escapeAttr(p.name)}</span>
               <div class="admin-field-prefix"><span class="prefix">R$</span>
                 <input type="number" min="0" step="0.01" placeholder="não oferece" data-pp-kind="${kind}" data-pp-idx="${idx}" data-pp-pkg="${p.id}" value="${v === null || v === undefined || v === '' ? '' : v}">
@@ -812,7 +812,7 @@ window.DataStore.onReady(function () {
     root.innerHTML = `
       <div class="plan-price-table">
         ${pkgs.filter(p => !pr.manual.includes(p.id)).map(p => `
-          <label class="plan-price-cell">
+          <label class="plan-price-cell admin-field">
             <span>${escapeAttr(p.name)}</span>
             <div class="admin-field-prefix"><span class="prefix">R$</span>
               <input type="number" min="0" step="0.01" data-credit-pkg="${p.id}" value="${Number(pr.credits[p.id]) || 0}">

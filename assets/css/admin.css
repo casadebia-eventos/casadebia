@@ -1331,3 +1331,6 @@ body.admin-body {
 
 .combo-price-preview { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; font-size: .9rem; }
 .combo-price-preview small { opacity: .7; }
+
+#pricingRuleRoot .help, .plan-price-table + .help { display: block; margin-top: 12px; line-height: 1.5; }
+.plan-price-cell.admin-field { margin: 0; }
