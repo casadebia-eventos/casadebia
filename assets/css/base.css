@@ -108,3 +108,12 @@ p { color: var(--text); }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ===== CELULAR: nada pode ficar mais largo que a tela (evita o "zoom" automático) ===== */
+html, body { max-width: 100%; overflow-x: hidden; }
+@supports (overflow: clip) { html, body { overflow-x: clip; } }
+img, video, iframe, svg, canvas { max-width: 100%; }
+.sim-steps, .sim-budget, .sim-step, .location-grid > *, .sim-layout > * { min-width: 0; }
+@media (max-width: 600px) {
+  .btn { white-space: normal; max-width: 100%; text-align: center; }
+}

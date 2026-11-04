@@ -75,12 +75,12 @@
 /* ===== LAYOUT PRINCIPAL ===== */
 .sim-layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
   padding-bottom: var(--space-9);
 }
 @media (min-width: 1024px) {
-  .sim-layout { grid-template-columns: 1fr 360px; align-items: start; }
+  .sim-layout { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
 }
 
 /* ===== CARD DE ETAPA ===== */
@@ -377,7 +377,7 @@
 /* ===== ESCOLHA SIM/NÃO (ETAPA 3) ===== */
 .sim-yesno {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-4);
   max-width: 560px;
   margin: var(--space-5) auto 0;
@@ -1173,7 +1173,7 @@
 
 .cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
 }
 .cal-day-name {
@@ -1487,7 +1487,7 @@
    ============================================ */
 .balloon-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: var(--space-4);
   margin-top: var(--space-4);
 }
@@ -1801,3 +1801,10 @@
 .deco-ref-status:empty { display: none; }
 .deco-ref-status.error { color: #A8334A; }
 .deco-ref-status.ok { color: #128C7E; }
+
+/* Celular pequeno: botões Sim/Não com menos espaço interno e texto quebrando linha */
+@media (max-width: 400px) {
+  .sim-yesno { gap: var(--space-3); }
+  .sim-yesno-option { padding: var(--space-4) var(--space-3); min-width: 0; overflow-wrap: anywhere; }
+  .sim-step { padding: var(--space-6) var(--space-4); }
+}
