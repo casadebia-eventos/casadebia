@@ -78,12 +78,14 @@
           // Pacotes com decoração inclusa (Premium, Pro Max...): precisa escolher
           // o modelo de montagem e o combo — senão o pedido chega sem a decoração.
           if (window.SIM_PRICING.packages[state.package]?.includesDecoration) {
-            return !!state.decoration?.type && !!state.decoration?.combo &&
-              (!themesForPlan().length || !!state.decoration?.theme);
+            // Com foto de referência, o combo e o tema ficam opcionais (a decoradora analisa)
+            if (!state.decoration?.type) return false;
+            if (hasRef()) return true;
+            return !!state.decoration?.combo && (!themesForPlan().length || !!state.decoration?.theme);
           }
           if (state.decoration?.enabled === false) return true;
           if (state.decoration?.enabled === true) {
-            return !!state.decoration.type && !!state.decoration.combo;
+            return !!state.decoration.type && (!!state.decoration.combo || hasRef());
           }
           return false;
         }
@@ -415,9 +417,10 @@
       const decoActive = isPremium() || state.decoration?.enabled === true;
       if (decoTypeSection) decoTypeSection.style.display = decoActive ? '' : 'none';
       if (decoCombosSection) decoCombosSection.style.display = state.decoration?.type ? '' : 'none';
-      if (decoBalloonsSection) decoBalloonsSection.style.display = (decoActive && (state.decoration?.combo || isPremium())) ? '' : 'none';
-      if (decoAddonsSection) decoAddonsSection.style.display = (decoActive && (state.decoration?.combo || isPremium())) ? '' : 'none';
+      if (decoBalloonsSection) decoBalloonsSection.style.display = (decoActive && (state.decoration?.combo || hasRef() || isPremium())) ? '' : 'none';
+      if (decoAddonsSection) decoAddonsSection.style.display = (decoActive && (state.decoration?.combo || hasRef() || isPremium())) ? '' : 'none';
       renderThemes();
+      renderRefPhotos();
     };
 
     const renderDecorationYesNo = () => {
@@ -456,6 +459,65 @@
       if (d.balloonAuto && !window.SIM_PRICING.packages[state.package]?.includesDecoration) { d.balloon = null; d.balloonAuto = false; }
       if (d.theme && d.theme !== 'outro' && !themesForPlan().some(t => t.id === d.theme)) d.theme = null;
     };
+
+    // ===== FOTO DE REFERÊNCIA DO CLIENTE (Cloudinary, opcional) =====
+    const refPhotos = () => (state.decoration?.refPhotos || []).filter(Boolean);
+    const hasRef = () => refPhotos().length > 0;
+    const MAX_REF = 3;
+    const cloudCfgPublic = () => {
+      try { return (window.DataStore?.loadData?.().config?.cloudinary) || {}; } catch { return {}; }
+    };
+    const renderRefPhotos = () => {
+      const sec = document.getElementById('decoRefSection');
+      const thumbs = document.getElementById('decoRefThumbs');
+      const btnText = document.getElementById('decoRefBtnText');
+      const btn = document.getElementById('decoRefBtn');
+      if (!sec) return;
+      const c = cloudCfgPublic();
+      const show = !!(c.cloudName && c.uploadPreset) && !!state.decoration?.type &&
+        (state.decoration?.enabled === true || isPremium());
+      sec.style.display = show ? '' : 'none';
+      if (!show || !thumbs) return;
+      thumbs.innerHTML = refPhotos().map((u, i) =>
+        `<div class="deco-ref-thumb"><img src="${u.replace(/"/g, '')}" alt="Foto de referência ${i + 1}"><button type="button" data-ref-del="${i}" aria-label="Remover">×</button></div>`).join('');
+      thumbs.querySelectorAll('[data-ref-del]').forEach(b => b.addEventListener('click', () => {
+        state.decoration.refPhotos.splice(+b.dataset.refDel, 1);
+        window.SIM.save(state);
+        renderRefPhotos(); renderDecorationVisibility(); renderDecorationSummary(); renderBudget();
+      }));
+      if (btnText) btnText.textContent = hasRef() ? 'Enviar outra foto' : 'Enviar foto de referência';
+      if (btn) btn.style.display = refPhotos().length >= MAX_REF ? 'none' : '';
+    };
+    const refInput = document.getElementById('decoRefInput');
+    refInput?.addEventListener('change', async () => {
+      const status = document.getElementById('decoRefStatus');
+      const setStatus = (t, cls = '') => { if (status) { status.textContent = t; status.className = 'deco-ref-status ' + cls; } };
+      const files = [...(refInput.files || [])].slice(0, MAX_REF - refPhotos().length);
+      refInput.value = '';
+      if (!files.length) return;
+      const c = cloudCfgPublic();
+      state.decoration.refPhotos = state.decoration.refPhotos || [];
+      for (const f of files) {
+        if (!/^image\//.test(f.type)) { setStatus('Envie apenas imagens (JPG, PNG...).', 'error'); continue; }
+        if (f.size > 10 * 1024 * 1024) { setStatus('A foto é muito grande (máx. 10 MB).', 'error'); continue; }
+        setStatus('Enviando foto...');
+        try {
+          const fd = new FormData();
+          fd.append('file', f);
+          fd.append('upload_preset', c.uploadPreset);
+          fd.append('folder', 'casadebia/referencias-clientes');
+          const r = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(c.cloudName)}/image/upload`, { method: 'POST', body: fd });
+          const j = await r.json();
+          if (!r.ok || !j.secure_url) throw new Error(j?.error?.message || 'falha');
+          state.decoration.refPhotos.push(j.secure_url);
+          window.SIM.save(state);
+          setStatus('Foto recebida! Ela vai junto com o seu pedido no WhatsApp.', 'ok');
+        } catch (e) {
+          setStatus('Não foi possível enviar a foto agora. Tente de novo ou mande pelo WhatsApp.', 'error');
+        }
+      }
+      renderRefPhotos(); renderDecorationVisibility(); renderDecorationSummary(); renderBudget();
+    });
 
     const renderThemes = () => {
       const sec = document.getElementById('decoThemesSection');
@@ -752,7 +814,7 @@
 
     const renderDecorationSummary = () => {
       if (!decoSummary) return;
-      if (state.decoration?.enabled !== true || !state.decoration?.combo) {
+      if (state.decoration?.enabled !== true || (!state.decoration?.combo && !hasRef())) {
         decoSummary.style.display = 'none';
         return;
       }
@@ -768,7 +830,7 @@
       decoSummary.style.display = '';
       decoSummary.innerHTML = `
         <span class="deco-summary-label">
-          <strong>${combo?.name || ''}</strong>
+          <strong>${combo?.name || 'Decoração pela sua foto'}</strong>${!combo ? ' · valor após análise' : (hasRef() ? ' + foto de referência' : '')}
           ${addonsCount > 0 ? ` + ${addonsCount} adicional${addonsCount > 1 ? 'is' : ''}` : ''}
         </span>
         <span class="deco-summary-value">${window.SIM.formatBRL(total)}</span>
@@ -1392,6 +1454,9 @@
             rows.push({ strongLabel: 'Tema: ' + (th ? th.name : 'Outro tema'), label: th ? 'Tema do evento' : 'Combinar pelo WhatsApp', value: '' });
           }
         }
+        if ((state.decoration.refPhotos || []).length) {
+          rows.push({ strongLabel: `Foto${state.decoration.refPhotos.length > 1 ? 's' : ''} de referência (${state.decoration.refPhotos.length})`, label: 'A decoradora analisa e passa o valor', value: combo ? '' : 'a combinar' });
+        }
         if (state.decoration.balloon && window.BALLOONS_DATA) {
           const bal = window.BALLOONS_DATA.find(b => b.id === state.decoration.balloon);
           if (bal) rows.push({ strongLabel: 'Balões: ' + bal.name, label: 'Personalizado', value: window.SIM.formatBRL(window.SIM.priceFor(bal, state.package) || 0) });
@@ -1485,6 +1550,7 @@
         <div class="summary-header">
           <div class="summary-header-label">Valor total estimado</div>
           <div class="summary-total">${window.SIM.formatBRL(total)}</div>
+          ${!state.decoration?.combo && (state.decoration?.refPhotos || []).length ? '<small class="summary-total-note">+ decoração da sua foto (valor após análise)</small>' : ''}
         </div>
         <div class="summary-body">
           ${sections.map(sec => `
@@ -1570,6 +1636,11 @@
             lines.push(`Tema: ${th ? th.name : 'Outro tema (combinar)'}`);
           }
           lines.push('');
+        } else if ((state.decoration?.refPhotos || []).length) {
+          const typeLabel = state.decoration?.type === 'completa' ? 'Decoração Montada' : 'Pegue e Monte';
+          lines.push('🎨 *Decoração pela foto de referência*');
+          lines.push(`${typeLabel} — valor após análise da decoradora`);
+          lines.push('');
         } else if (isPremiumPkg) {
           const inc = DD.included?.[state.package] || (state.package === 'promax' ? DD.promaxIncluded : null);
           lines.push(`🎨 *${inc?.title || 'Decoração inclusa no pacote'}*`);
@@ -1577,6 +1648,15 @@
           if (!(inc?.items || []).length) lines.push('Decoração montada pela Casa de Bia');
           lines.push('');
         }
+      }
+
+      // FOTOS DE REFERÊNCIA DO CLIENTE
+      const refs = (state.decoration?.refPhotos || []).filter(Boolean);
+      if (refs.length && (state.decoration?.enabled === true || isPremiumPkg)) {
+        lines.push(`📷 *Foto${refs.length > 1 ? 's' : ''} de referência da decoração*`);
+        refs.forEach(u => lines.push(u));
+        lines.push('_Para a decoradora analisar e passar o valor._');
+        lines.push('');
       }
 
       // BALÕES
@@ -1665,6 +1745,7 @@
       lines.push(SEP);
       lines.push(`💰 *Valor total estimado:*`);
       lines.push(`*${fmt(total)}*`);
+      if (!state.decoration?.combo && (state.decoration?.refPhotos || []).length) lines.push('_+ decoração da foto de referência (valor após análise)_');
       lines.push('');
       lines.push('Pode me confirmar a disponibilidade e como faço o pagamento? 😊');
 
@@ -1760,7 +1841,7 @@
               : !state.decoration?.type
                 ? 'Escolha como quer a decoração: Pegue e Monte ou Decoração Montada.'
                 : !state.decoration?.combo
-                  ? 'Escolha um combo de decoração para continuar.'
+                  ? 'Escolha um combo de decoração ou envie uma foto de referência.'
                   : 'Escolha o tema do seu evento (ou "Outro tema").',
           4: 'Informe o número de convidados.',
           5: 'Escolha se deseja usar gás.',

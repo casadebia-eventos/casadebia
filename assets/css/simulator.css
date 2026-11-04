@@ -1780,3 +1780,17 @@
 .deco-theme-name { font-weight: 700; color: var(--dark); padding: 6px var(--space-3) 0; }
 .deco-theme-desc { font-size: var(--fs-sm); color: var(--text-muted, #6b6259); padding: 0 var(--space-3); line-height: 1.4; }
 .deco-theme-card.selected { border-color: var(--gold-dark); box-shadow: 0 0 0 3px rgba(169,120,42,.25); }
+
+/* ===== Fotos ilustrativas + foto de referência ===== */
+.deco-illustrative { margin: var(--space-3) 0 0; font-size: 0.8rem; color: var(--text-muted, #6b6259); line-height: 1.45; }
+.deco-ref-box { background: var(--white); border: 1.5px dashed var(--gold); border-radius: var(--radius-md); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.deco-ref-text { margin: 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--dark); }
+.deco-ref-btn { align-self: flex-start; cursor: pointer; }
+.deco-ref-thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.deco-ref-thumbs:empty { display: none; }
+.deco-ref-thumb { position: relative; width: 84px; height: 84px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,.1); }
+.deco-ref-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.deco-ref-thumb button { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(0,0,0,.65); color: #fff; font-size: 13px; line-height: 22px; cursor: pointer; }
+.deco-ref-status { color: var(--text-muted, #6b6259); }
+.deco-ref-status.error { color: #A8334A; }
+.deco-ref-status.ok { color: #128C7E; }
