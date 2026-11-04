@@ -461,6 +461,9 @@
     };
 
     // ===== FOTO DE REFERÊNCIA DO CLIENTE (Cloudinary, opcional) =====
+    // Guarda o card fora da grade: a grade é redesenhada e o card seria apagado junto
+    const refCardEl = document.getElementById('decoRefCard');
+    const refQ = (id) => refCardEl ? refCardEl.querySelector('#' + id) : null;
     const refPhotos = () => (state.decoration?.refPhotos || []).filter(Boolean);
     const hasRef = () => refPhotos().length > 0;
     const MAX_REF = 3;
@@ -468,10 +471,10 @@
       try { return (window.DataStore?.loadData?.().config?.cloudinary) || {}; } catch { return {}; }
     };
     const renderRefPhotos = () => {
-      const card = document.getElementById('decoRefCard');
-      const thumbs = document.getElementById('decoRefThumbs');
-      const btnText = document.getElementById('decoRefBtnText');
-      const btn = document.getElementById('decoRefBtn');
+      const card = refCardEl;
+      const thumbs = refQ('decoRefThumbs');
+      const btnText = refQ('decoRefBtnText');
+      const btn = refQ('decoRefBtn');
       if (!card) return;
       const c = cloudCfgPublic();
       const show = !!(c.cloudName && c.uploadPreset);
@@ -488,9 +491,9 @@
       if (btnText) btnText.textContent = hasRef() ? 'Enviar outra' : 'Enviar foto';
       if (btn) btn.style.display = refPhotos().length >= MAX_REF ? 'none' : '';
     };
-    const refInput = document.getElementById('decoRefInput');
+    const refInput = refQ('decoRefInput');
     refInput?.addEventListener('change', async () => {
-      const status = document.getElementById('decoRefStatus');
+      const status = refQ('decoRefStatus');
       const setStatus = (t, cls = '') => { if (status) { status.textContent = t; status.className = 'deco-ref-status ' + cls; } };
       const files = [...(refInput.files || [])].slice(0, MAX_REF - refPhotos().length);
       refInput.value = '';
@@ -555,7 +558,8 @@
       const filtered = combosForPlan();
 
       if (!filtered.length) {
-        decoCombosGrid.innerHTML = '<div class="deco-combo-empty">Nenhum combo disponível para este tipo no momento.</div>';
+        decoCombosGrid.innerHTML = '';
+        if (refCardEl) { decoCombosGrid.appendChild(refCardEl); renderRefPhotos(); }
         return;
       }
 
@@ -579,8 +583,7 @@
       `;}).join('');
 
       // Card "Tem a sua própria foto?" logo depois do último combo
-      const refCard = document.getElementById('decoRefCard');
-      if (refCard) { decoCombosGrid.appendChild(refCard); renderRefPhotos(); }
+      if (refCardEl) { decoCombosGrid.appendChild(refCardEl); renderRefPhotos(); }
 
       decoCombosGrid.querySelectorAll('.deco-combo[data-combo]').forEach(btn => {
         btn.addEventListener('click', (ev) => {
