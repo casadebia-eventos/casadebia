@@ -78,7 +78,8 @@
           // Pacotes com decoração inclusa (Premium, Pro Max...): precisa escolher
           // o modelo de montagem e o combo — senão o pedido chega sem a decoração.
           if (window.SIM_PRICING.packages[state.package]?.includesDecoration) {
-            return !!state.decoration?.type && !!state.decoration?.combo;
+            return !!state.decoration?.type && !!state.decoration?.combo &&
+              (!themesForPlan().length || !!state.decoration?.theme);
           }
           if (state.decoration?.enabled === false) return true;
           if (state.decoration?.enabled === true) {
@@ -200,9 +201,11 @@
           state.decoration = state.decoration || { enabled: null, type: null, combo: null, addons: [], balloon: null };
           state.decoration.enabled = true;
         }
+        syncDecorationWithPlan();
         window.SIM.save(state);
         renderPackages();
         updateGuestUI();
+        if (state.decoration?.type) renderDecorationCombos();
         renderDecorationYesNo();
         renderDecorationVisibility();
         renderBalloons();
@@ -414,6 +417,7 @@
       if (decoCombosSection) decoCombosSection.style.display = state.decoration?.type ? '' : 'none';
       if (decoBalloonsSection) decoBalloonsSection.style.display = (decoActive && (state.decoration?.combo || isPremium())) ? '' : 'none';
       if (decoAddonsSection) decoAddonsSection.style.display = (decoActive && (state.decoration?.combo || isPremium())) ? '' : 'none';
+      renderThemes();
     };
 
     const renderDecorationYesNo = () => {
@@ -428,14 +432,65 @@
       });
     };
 
+    // Combos disponíveis no plano escolhido (lista única para Pegue e Monte e Montada;
+    // cópias antigas 'completa' são ignoradas; combo sem preço no plano não aparece)
+    const combosForPlan = () => {
+      const all = window.DECORATION_DATA.combos || [];
+      const shared = all.filter(c => c.type !== 'completa');
+      return (shared.length ? shared : all).filter(c => window.SIM.availableFor(c, state.package));
+    };
+    const themesForPlan = () => (window.DECORATION_DATA.themes || [])
+      .filter(t => t && t.name && (!t.packages || !t.packages.length || t.packages.includes(state.package)));
+
+    // Ao trocar de plano: tira escolhas que não existem nesse plano e,
+    // se só houver um combo (ex.: Diamond no Pro Max), já deixa marcado.
+    const syncDecorationWithPlan = () => {
+      const d = state.decoration;
+      if (!d) return;
+      const combos = combosForPlan();
+      if (d.combo && !combos.some(c => c.id === d.combo)) d.combo = null;
+      if (!d.combo && combos.length === 1 && window.SIM_PRICING.packages[state.package]?.includesDecoration) d.combo = combos[0].id;
+      const bal = d.balloon && (window.BALLOONS_DATA || []).find(b => b.id === d.balloon);
+      if (d.balloon && (!bal || !window.SIM.availableFor(bal, state.package))) d.balloon = null;
+      // Balão marcado sozinho não vale em plano sem decoração inclusa
+      if (d.balloonAuto && !window.SIM_PRICING.packages[state.package]?.includesDecoration) { d.balloon = null; d.balloonAuto = false; }
+      if (d.theme && d.theme !== 'outro' && !themesForPlan().some(t => t.id === d.theme)) d.theme = null;
+    };
+
+    const renderThemes = () => {
+      const sec = document.getElementById('decoThemesSection');
+      const grid = document.getElementById('decoThemes');
+      if (!sec || !grid) return;
+      const themes = themesForPlan();
+      const show = themes.length > 0 && (state.decoration?.enabled === true || isPremium());
+      sec.style.display = show ? '' : 'none';
+      if (!show) return;
+      const esc = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const cur = state.decoration?.theme;
+      grid.innerHTML = themes.map(t => `
+        <button type="button" class="deco-theme-card ${cur === t.id ? 'selected' : ''}" data-theme="${esc(t.id)}">
+          ${t.image ? `<img src="${esc(t.image)}" alt="${esc(t.name)}" loading="lazy">` : '<div class="deco-theme-noimg">✦</div>'}
+          <span class="deco-theme-name">${esc(t.name)}</span>
+          ${t.description ? `<span class="deco-theme-desc">${esc(t.description)}</span>` : ''}
+        </button>`).join('') + `
+        <button type="button" class="deco-theme-card deco-theme-other ${cur === 'outro' ? 'selected' : ''}" data-theme="outro">
+          <div class="deco-theme-noimg">?</div>
+          <span class="deco-theme-name">Outro tema</span>
+          <span class="deco-theme-desc">Conte sua ideia e combinamos pelo WhatsApp.</span>
+        </button>`;
+      grid.querySelectorAll('[data-theme]').forEach(btn => btn.addEventListener('click', () => {
+        state.decoration.theme = btn.dataset.theme;
+        window.SIM.save(state);
+        renderThemes();
+      }));
+    };
+
     const renderDecorationCombos = () => {
       if (!decoCombosGrid) return;
       // Os combos são os mesmos para Pegue e Monte e Decoração Montada —
       // o cliente só escolhe o modelo de montagem. (Cópias antigas marcadas como
       // 'completa' são ignoradas quando existe a lista principal.)
-      const all = window.DECORATION_DATA.combos || [];
-      const shared = all.filter(c => c.type !== 'completa');
-      const filtered = shared.length ? shared : all;
+      const filtered = combosForPlan();
 
       if (!filtered.length) {
         decoCombosGrid.innerHTML = '<div class="deco-combo-empty">Nenhum combo disponível para este tipo no momento.</div>';
@@ -454,7 +509,7 @@
               ${c.items.map(i => `<li><i data-lucide="check"></i>${i}</li>`).join('')}
             </ul>
             <div class="deco-combo-foot">
-              <span class="deco-combo-price">${window.SIM.formatBRL(c.price)}</span>
+              <span class="deco-combo-price">${window.SIM.formatBRL(window.SIM.priceFor(c, state.package))}</span>
               <span class="deco-combo-view"><i data-lucide="zoom-in"></i>Ver detalhes</span>
             </div>
           </div>
@@ -482,7 +537,7 @@
             kind: 'combo',
             id: combo.id,
             title: combo.name,
-            price: combo.price,
+            price: window.SIM.priceFor(combo, state.package),
             description: descFull,
             images: imgs,
             selected: state.decoration?.combo === combo.id
@@ -496,7 +551,7 @@
     // ===== BALÕES PERSONALIZADOS =====
     const renderBalloons = () => {
       if (!decoBalloonsGrid) return;
-      const balloons = window.BALLOONS_DATA || [];
+      const balloons = (window.BALLOONS_DATA || []).filter(b => window.SIM.availableFor(b, state.package));
       if (!balloons.length) {
         decoBalloonsGrid.innerHTML = '<div class="deco-combo-empty">Nenhum modelo de balão cadastrado.</div>';
         return;
@@ -508,7 +563,7 @@
             <span class="balloon-card-name">${b.name}</span>
             <span class="balloon-card-desc">${b.shortDesc || ''}</span>
             <div class="balloon-card-foot">
-              <span class="balloon-card-price">${window.SIM.formatBRL(b.price)}</span>
+              <span class="balloon-card-price">${window.SIM.formatBRL(window.SIM.priceFor(b, state.package))}</span>
               <span class="balloon-card-view"><i data-lucide="zoom-in"></i>Ver detalhes</span>
             </div>
           </div>
@@ -521,6 +576,7 @@
           // Clicar no card marca/desmarca o balão; "Ver detalhes" abre as fotos
           if (!ev.target.closest('.balloon-card-view')) {
             state.decoration.balloon = (state.decoration.balloon === bal.id) ? null : bal.id;
+            state.decoration.balloonAuto = false;
             window.SIM.save(state);
             renderBalloons();
             renderDecorationSummary();
@@ -531,7 +587,7 @@
             kind: 'balloon',
             id: bal.id,
             title: bal.name,
-            price: bal.price,
+            price: window.SIM.priceFor(bal, state.package),
             description: bal.description || bal.shortDesc || '',
             images: bal.images || [],
             selected: state.decoration?.balloon === bal.id
@@ -706,7 +762,7 @@
         return sum + (a?.price || 0);
       }, 0);
       const balloon = state.decoration.balloon && (window.BALLOONS_DATA || []).find(b => b.id === state.decoration.balloon);
-      const total = (combo?.price || 0) + addonsTotal + (balloon?.price || 0);
+      const total = (window.SIM.priceFor(combo, state.package) || 0) + addonsTotal + (window.SIM.priceFor(balloon, state.package) || 0);
       const addonsCount = (state.decoration.addons || []).length;
 
       decoSummary.style.display = '';
@@ -1329,12 +1385,16 @@
           rows.push({
             strongLabel: combo.name,
             label: state.decoration.type === 'completa' ? 'Decoração Montada' : 'Pegue e Monte',
-            value: window.SIM.formatBRL(combo.price)
+            value: window.SIM.formatBRL(window.SIM.priceFor(combo, state.package) || 0)
           });
+          if (state.decoration.theme) {
+            const th = (DD.themes || []).find(t => t.id === state.decoration.theme);
+            rows.push({ strongLabel: 'Tema: ' + (th ? th.name : 'Outro tema'), label: th ? 'Tema do evento' : 'Combinar pelo WhatsApp', value: '' });
+          }
         }
         if (state.decoration.balloon && window.BALLOONS_DATA) {
           const bal = window.BALLOONS_DATA.find(b => b.id === state.decoration.balloon);
-          if (bal) rows.push({ strongLabel: 'Balões: ' + bal.name, label: 'Personalizado', value: window.SIM.formatBRL(bal.price) });
+          if (bal) rows.push({ strongLabel: 'Balões: ' + bal.name, label: 'Personalizado', value: window.SIM.formatBRL(window.SIM.priceFor(bal, state.package) || 0) });
         }
         (state.decoration.addons || []).forEach(id => {
           const a = DD.addons.find(x => x.id === id);
@@ -1504,7 +1564,11 @@
         if (combo) {
           lines.push(`🎨 *${combo.name}*`);
           const typeLabel = state.decoration?.type === 'completa' ? 'Decoração Montada' : 'Pegue e Monte';
-          lines.push(`${typeLabel} — ${fmt(combo.price)}`);
+          lines.push(`${typeLabel} — ${fmt(window.SIM.priceFor(combo, state.package) || 0)}`);
+          if (state.decoration?.theme) {
+            const th = (DD.themes || []).find(t => t.id === state.decoration.theme);
+            lines.push(`Tema: ${th ? th.name : 'Outro tema (combinar)'}`);
+          }
           lines.push('');
         } else if (isPremiumPkg) {
           const inc = DD.included?.[state.package] || (state.package === 'promax' ? DD.promaxIncluded : null);
@@ -1520,7 +1584,7 @@
         const bal = window.BALLOONS_DATA.find(b => b.id === state.decoration.balloon);
         if (bal) {
           lines.push(`🎈 *Balões: ${bal.name}*`);
-          lines.push(`Personalizado — ${fmt(bal.price)}`);
+          lines.push(`Personalizado — ${fmt(window.SIM.priceFor(bal, state.package) || 0)}`);
           lines.push('');
         }
       }
@@ -1613,9 +1677,11 @@
     const autoPickBalloon = () => {
       const d = state.decoration;
       if (!d || d.enabled !== true || !d.combo || d.balloon) return;
-      const free = (window.BALLOONS_DATA || []).find(b => Number(b.price) === 0);
-      if (!free) return;
-      d.balloon = free.id;
+      // Só nos planos que já incluem decoração (Premium/Pro Max). No Básico/Essencial segue sem balões.
+      if (!window.SIM_PRICING.packages[state.package]?.includesDecoration) return;
+      const def = (window.BALLOONS_DATA || []).find(b => b.isDefault && window.SIM.availableFor(b, state.package));
+      if (!def) return;
+      d.balloon = def.id;
       d.balloonAuto = true;
       window.SIM.save(state);
       renderBalloons();
@@ -1693,7 +1759,9 @@
               ? 'Indique se deseja decoração.'
               : !state.decoration?.type
                 ? 'Escolha como quer a decoração: Pegue e Monte ou Decoração Montada.'
-                : 'Escolha um combo de decoração para continuar.',
+                : !state.decoration?.combo
+                  ? 'Escolha um combo de decoração para continuar.'
+                  : 'Escolha o tema do seu evento (ou "Outro tema").',
           4: 'Informe o número de convidados.',
           5: 'Escolha se deseja usar gás.',
           7: 'Preencha seu nome (mín. 3 letras) e um WhatsApp válido.'

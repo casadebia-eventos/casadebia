@@ -198,7 +198,7 @@
     package: null,         // 'basico' | 'essencial' | 'premium'
     guests: 0,
     gas: null,             // true | false | null
-    decoration: { enabled: null, type: null, combo: null, addons: [], balloon: null },
+    decoration: { enabled: null, type: null, combo: null, addons: [], balloon: null, theme: null },
     services: {},
     date: '',
     customer: { name: '', whatsapp: '' }
@@ -227,6 +227,19 @@
       maximumFractionDigits: 2
     });
   };
+
+  // ===== PREÇO POR PLANO (combos e balões) =====
+  // Cada combo/balão pode ter um preço diferente em cada plano (pricesByPackage).
+  // Sem tabela → usa o preço geral. Com tabela e o plano em branco → não aparece nesse plano.
+  const priceFor = (item, pkg) => {
+    if (!item) return null;
+    const t = item.pricesByPackage;
+    if (!pkg || !t || typeof t !== 'object' || !Object.keys(t).length) return Number(item.price) || 0;
+    const v = t[pkg];
+    if (v === null || v === undefined || v === '') return null;
+    return Number(v) || 0;
+  };
+  const availableFor = (item, pkg) => priceFor(item, pkg) !== null;
 
   // ===== CÁLCULO DO ORÇAMENTO =====
   const calculate = (state) => {
@@ -282,9 +295,9 @@
             key: 'deco-combo',
             label: `Decoração: ${combo.name}`,
             sub: typeLabel,
-            value: combo.price
+            value: priceFor(combo, state.package) || 0
           });
-          total += combo.price;
+          total += priceFor(combo, state.package) || 0;
         }
       }
 
@@ -296,9 +309,9 @@
             key: 'deco-balloon',
             label: `Balões: ${bal.name}`,
             sub: 'Personalizado',
-            value: bal.price
+            value: priceFor(bal, state.package) || 0
           });
-          total += bal.price;
+          total += priceFor(bal, state.package) || 0;
         }
       }
 
@@ -471,6 +484,8 @@
     load,
     save,
     calculate,
+    priceFor,
+    availableFor,
     formatBRL,
     reset,
     STORAGE_KEY

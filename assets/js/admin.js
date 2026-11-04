@@ -604,7 +604,60 @@ window.DataStore.onReady(function () {
     renderCombos();
     renderAddons();
     renderPromaxIncluded();
+    renderThemesAdmin();
   }
+
+  // ===== TEMAS DO EVENTO =====
+  function renderThemesAdmin() {
+    const root = $('#themesRoot');
+    if (!root) return;
+    const D = data.decoration;
+    if (!Array.isArray(D.themes)) D.themes = [];
+    const pkgs = Object.values(data.packages || {});
+    root.innerHTML = D.themes.length ? D.themes.map((t, idx) => `
+      <div class="admin-card" data-theme-idx="${idx}" style="margin-top: var(--space-4);">
+        <div class="admin-card-header">
+          <div><h3>${escapeAttr(t.name || 'Tema')}</h3></div>
+          <button class="btn btn-outline btn-sm" data-theme-delete="${idx}"><i data-lucide="trash-2"></i>Excluir</button>
+        </div>
+        <div class="admin-field"><label>Nome do tema</label><input data-theme-field="name" value="${escapeAttr(t.name || '')}"></div>
+        <div class="admin-field" style="margin-top: var(--space-3);"><label>Descrição curta</label><input data-theme-field="description" value="${escapeAttr(t.description || '')}"></div>
+        <div class="admin-field" style="margin-top: var(--space-3);">
+          <label>Foto</label>
+          <input type="url" data-theme-field="image" placeholder="https://..." value="${escapeAttr(t.image || '')}">
+          ${t.image ? `<img src="${escapeAttr(t.image)}" alt="" style="margin-top:8px;max-width:200px;border-radius:8px;display:block;">` : ''}
+        </div>
+        <div class="admin-field" style="margin-top: var(--space-3);">
+          <label>Aparece nos planos</label>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;">
+            ${pkgs.map(p => `<label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" data-theme-pkg="${p.id}" ${(t.packages || []).includes(p.id) ? 'checked' : ''}>${escapeAttr(p.name)}</label>`).join('')}
+          </div>
+        </div>
+      </div>`).join('') : '<p class="help">Nenhum tema cadastrado ainda. Clique em "Novo tema".</p>';
+
+    root.querySelectorAll('[data-theme-idx]').forEach(card => {
+      const t = D.themes[+card.dataset.themeIdx];
+      card.querySelectorAll('[data-theme-field]').forEach(inp => inp.addEventListener('change', () => {
+        t[inp.dataset.themeField] = inp.value.trim();
+        persist();
+        if (inp.dataset.themeField !== 'description') renderThemesAdmin();
+      }));
+      card.querySelectorAll('[data-theme-pkg]').forEach(chk => chk.addEventListener('change', () => {
+        t.packages = [...card.querySelectorAll('[data-theme-pkg]:checked')].map(c => c.dataset.themePkg);
+        persist();
+      }));
+      card.querySelector('[data-theme-delete]')?.addEventListener('click', () => {
+        if (confirm(`Excluir o tema "${t.name}"?`)) { D.themes.splice(+card.dataset.themeIdx, 1); persist(); renderThemesAdmin(); }
+      });
+    });
+    if (window.lucide) window.lucide.createIcons();
+  }
+  $('#btnAddTheme')?.addEventListener('click', () => {
+    if (!Array.isArray(data.decoration.themes)) data.decoration.themes = [];
+    data.decoration.themes.push({ id: 'tema-' + Date.now().toString(36), name: 'Novo tema', description: '', image: '', packages: ['promax'] });
+    persist();
+    renderThemesAdmin();
+  });
 
   // Decoração já montada de cada pacote com decoração inclusa (foto + título + itens)
   function renderPromaxIncluded() {
@@ -647,7 +700,7 @@ window.DataStore.onReady(function () {
     root.querySelectorAll('[data-inc-pkg]').forEach(card => {
       const inc = D.included[card.dataset.incPkg];
       card.querySelector('[data-inc-field="title"]')?.addEventListener('change', (e) => { inc.title = e.target.value; persist(); });
-      card.querySelector('[data-inc-field="image"]')?.addEventListener('change', (e) => { inc.image = e.target.value.trim(); persist(); renderPromaxIncluded(); });
+      card.querySelector('[data-inc-field="image"]', '[data-theme-field="image"]')?.addEventListener('change', (e) => { inc.image = e.target.value.trim(); persist(); renderPromaxIncluded(); });
       card.querySelectorAll('.array-row input').forEach((inp, i) => {
         inp.addEventListener('change', () => { inc.items[i] = inp.value; persist(); });
       });
@@ -662,6 +715,43 @@ window.DataStore.onReady(function () {
     if (window.lucide) window.lucide.createIcons();
   }
 
+  // ===== PREÇO POR PLANO (combos e balões) =====
+  function planPriceTableHTML(kind, idx, item) {
+    const pkgs = Object.values(data.packages || {});
+    const t = item.pricesByPackage || {};
+    const hasTable = item.pricesByPackage && Object.keys(item.pricesByPackage).length;
+    return `
+      <div class="admin-field" style="margin-top: var(--space-4);">
+        <label>Preço em cada plano</label>
+        <div class="plan-price-table">
+          ${pkgs.map(p => {
+            const v = hasTable ? t[p.id] : item.price;
+            return `<label class="plan-price-cell">
+              <span>${escapeAttr(p.name)}</span>
+              <div class="admin-field-prefix"><span class="prefix">R$</span>
+                <input type="number" min="0" step="0.01" placeholder="não oferece" data-pp-kind="${kind}" data-pp-idx="${idx}" data-pp-pkg="${p.id}" value="${v === null || v === undefined || v === '' ? '' : v}">
+              </div>
+            </label>`;
+          }).join('')}
+        </div>
+        <span class="help">Use 0 quando já estiver incluso no plano. Deixe <strong>em branco</strong> para não aparecer naquele plano.</span>
+      </div>`;
+  }
+  document.addEventListener('change', (e) => {
+    const inp = e.target.closest && e.target.closest('[data-pp-kind]');
+    if (!inp) return;
+    const list = inp.dataset.ppKind === 'combo' ? data.decoration.combos : data.balloons;
+    const item = list[+inp.dataset.ppIdx];
+    if (!item) return;
+    if (!item.pricesByPackage || !Object.keys(item.pricesByPackage).length) {
+      // Primeira edição: começa a tabela com o preço geral em todos os planos
+      item.pricesByPackage = {};
+      Object.keys(data.packages || {}).forEach(k => { item.pricesByPackage[k] = Number(item.price) || 0; });
+    }
+    item.pricesByPackage[inp.dataset.ppPkg] = inp.value === '' ? null : (parseFloat(inp.value) || 0);
+    persist();
+  });
+
   function renderCombos() {
     const root = $('#combosRoot');
     if (!data.decoration.combos.length) {
@@ -675,7 +765,7 @@ window.DataStore.onReady(function () {
               <h4>${c.name}</h4>
               <p>${c.type === 'completa' ? '(cópia antiga — pode excluir) · ' : ''}${c.description}</p>
             </div>
-            <div class="admin-item-price">${formatBRL(c.price)}</div>
+            <div class="admin-item-price">${c.pricesByPackage && Object.keys(c.pricesByPackage).length ? 'por plano' : formatBRL(c.price)}</div>
             <div class="admin-item-actions">
               <button class="admin-icon-btn" data-toggle aria-label="Editar"><i data-lucide="chevron-down"></i></button>
               <button class="admin-icon-btn danger" data-delete-combo="${idx}" aria-label="Excluir"><i data-lucide="trash-2"></i></button>
@@ -688,17 +778,11 @@ window.DataStore.onReady(function () {
                 <input data-combo-field="name" data-idx="${idx}" value="${escapeAttr(c.name)}">
               </div>
               <div class="admin-field">
-                <label>Preço</label>
-                <div class="admin-field-prefix">
-                  <span class="prefix">R$</span>
-                  <input type="number" min="0" data-combo-field="price" data-idx="${idx}" value="${c.price}">
-                </div>
-              </div>
-              <div class="admin-field">
                 <label>Categoria <small>(ex: Clássico, Premium, Temático)</small></label>
                 <input data-combo-field="category" data-idx="${idx}" value="${escapeAttr(c.category || '')}">
               </div>
             </div>
+            ${planPriceTableHTML('combo', idx, c)}
             <div class="admin-field" style="margin-top: var(--space-4);">
               <label>Descrição</label>
               <textarea data-combo-field="description" data-idx="${idx}" rows="4">${escapeAttr(c.description)}</textarea>
@@ -1417,13 +1501,13 @@ window.DataStore.onReady(function () {
             <input type="text" data-bal-field="name" value="${escapeHTML(b.name)}">
           </div>
           <div class="admin-field">
-            <label>Preço</label>
-            <div class="admin-field-prefix">
-              <span class="prefix">R$</span>
-              <input type="number" min="0" data-bal-field="price" value="${b.price}">
-            </div>
+            <label class="admin-check" style="display:flex;gap:8px;align-items:center;margin-top:28px;">
+              <input type="checkbox" data-bal-default ${b.isDefault ? 'checked' : ''}>
+              Balão padrão <small>(marcado sozinho no Premium/Pro Max se o cliente não escolher)</small>
+            </label>
           </div>
         </div>
+        ${planPriceTableHTML('balloon', idx, b)}
         <div class="admin-field">
           <label>Descrição curta <small>(exibida no card)</small></label>
           <input type="text" data-bal-field="shortDesc" value="${escapeHTML(b.shortDesc || '')}">
@@ -1455,6 +1539,15 @@ window.DataStore.onReady(function () {
         persist();
         // Re-render só se images mudou (para atualizar contador)
         if (field === 'images') renderBaloes();
+      });
+    });
+
+    root.querySelectorAll('[data-bal-default]').forEach(chk => {
+      chk.addEventListener('change', () => {
+        const idx = parseInt(chk.closest('[data-bal-idx]').dataset.balIdx, 10);
+        data.balloons.forEach((b, i) => { b.isDefault = chk.checked && i === idx; });
+        persist();
+        renderBaloes();
       });
     });
 
@@ -1798,7 +1891,7 @@ window.DataStore.onReady(function () {
   const UPLOAD_TARGETS = [
     '[data-media-field="src"]', '[data-media-field="full"]', '[data-media-field="poster"]',
     '[data-combo-field="images"]', '[data-bal-field="images"]', '[data-svc-field="image"]',
-    '#cfgIncludedDecorationImage', '#cfgProfilePhoto', '[data-inc-field="image"]'
+    '#cfgIncludedDecorationImage', '#cfgProfilePhoto', '[data-inc-field="image"]', '[data-theme-field="image"]'
   ].join(',');
   function enhanceUploadFields(scope = document) {
     scope.querySelectorAll(UPLOAD_TARGETS).forEach(field => {

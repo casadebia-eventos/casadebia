@@ -1323,3 +1323,8 @@ body.admin-body {
 .hero-admin-item img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--bg); }
 .hero-admin-actions { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; gap: 4px; }
 .hero-admin-actions span { font-weight: 700; color: var(--gold-dark); font-size: var(--fs-sm); }
+
+/* Preço por plano */
+.plan-price-table { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (min-width: 900px) { .plan-price-table { grid-template-columns: repeat(4, 1fr); } }
+.plan-price-cell { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; font-weight: 600; }

@@ -125,6 +125,8 @@
           '1 LED de letra ou idade'
         ], image: '' }
       },
+      // Temas do evento (cards com foto). packages = planos onde aparece (vazio = todos)
+      themes: [],
       // (antigo) mantido só para compatibilidade com dados salvos antes
       promaxIncluded: {
         title: 'Decoração Pro Max — já montada e inclusa',
