@@ -1349,3 +1349,23 @@ body.admin-body {
 
 .combo-plans { display: flex; flex-wrap: wrap; gap: 10px 20px; }
 .combo-plans label { display: flex; align-items: center; gap: 6px; font-weight: 500; white-space: nowrap; }
+
+/* ===== CELULAR: sem zoom automático no painel =====
+   O iPhone dá zoom sozinho ao tocar num campo com letra menor que 16px.
+   No celular todos os campos do painel usam 16px. */
+@media (max-width: 1024px) {
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),
+  select, textarea { font-size: 16px !important; }
+}
+html, body { max-width: 100%; }
+@supports (overflow: clip) { html, body { overflow-x: clip; } }
+img, video, iframe { max-width: 100%; }
+@media (max-width: 600px) {
+  /* Filtros do Histórico e do Painel quebram em mais linhas em vez de sair da tela */
+  .dash-period { display: flex; flex-wrap: wrap; max-width: 100%; border-radius: var(--radius-lg); }
+  /* Tabela de preços das decorações cabe na tela */
+  .deco-price-result { min-width: 0; width: 100%; font-size: .85rem; }
+  .deco-price-result th, .deco-price-result td { padding: 8px 6px; }
+  .deco-price-row { grid-template-columns: 90px 1fr; }
+  .combo-plans { gap: 8px 14px; }
+}
