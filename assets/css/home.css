@@ -18,7 +18,11 @@
   position: absolute;
   inset: 0;
   z-index: -2;
+  background: #0D0B09; /* fundo escuro enquanto as fotos do painel carregam */
 }
+/* As fotos aparecem suavemente só depois de carregadas (sem "piscar" foto errada) */
+.hero-slides .hero-slide { opacity: 0; }
+.hero-slides.ready .hero-slide.active { opacity: 1; }
 
 .hero-slide {
   position: absolute;
@@ -32,7 +36,6 @@
   transition-duration: 1.4s, 8s;
 }
 .hero-slide.active {
-  opacity: 1;
   transform: scale(1);
 }
 

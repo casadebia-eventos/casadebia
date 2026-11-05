@@ -67,16 +67,44 @@
     stats.forEach(el => io.observe(el));
   });
 
-  // ===== FOTOS DO BANNER (vêm do painel, se cadastradas) =====
-  window.DataStore.onReady(() => {
-    const imgs = (window.DataStore.loadData().config?.heroImages || []).filter(Boolean);
-    if (!imgs.length) return;
+  // ===== FOTOS DO BANNER (vêm do painel: Galeria → Banner da home) =====
+  // Só mostra fotos depois de carregadas, com fade. Quem já visitou o site vê na hora
+  // (as fotos ficam guardadas no aparelho). Sem nenhuma foto no painel → fotos padrão.
+  const DEFAULT_HERO = [
+    'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1920&q=80',
+    'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1920&q=80',
+    'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1920&q=80',
+    'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1920&q=80'
+  ];
+  let heroApplied = '';
+  const applyHero = (imgs) => {
+    const list = (imgs || []).filter(Boolean);
+    if (!list.length) return false;
+    const key = list.join('|');
+    if (key === heroApplied) return true;
+    heroApplied = key;
+    const wrap = document.querySelector('.hero-slides');
     const slides = [...document.querySelectorAll('.hero-slide')];
-    // Se houver menos de 4 fotos, elas se repetem no carrossel
-    slides.forEach((s, i) => {
-      const url = imgs[i % imgs.length];
-      s.style.backgroundImage = `url('${url.replace(/'/g, '%27')}')`;
-    });
+    if (!wrap || !slides.length) return true;
+    const first = new Image();
+    const show = () => {
+      // Se houver menos de 4 fotos, elas se repetem no carrossel
+      slides.forEach((s, i) => { s.style.backgroundImage = `url('${list[i % list.length].replace(/'/g, '%27')}')`; });
+      requestAnimationFrame(() => wrap.classList.add('ready'));
+    };
+    first.onload = show;
+    first.onerror = show;
+    first.src = list[0];
+    setTimeout(() => { if (!wrap.classList.contains('ready')) show(); }, 4000);
+    return true;
+  };
+  const cachedHero = () => { try { return (window.DataStore.loadData().config?.heroImages || []); } catch (e) { return []; } };
+  // 1) Visitante que já veio antes: usa as fotos guardadas no aparelho, na hora
+  const domOk = () => applyHero(cachedHero());
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', domOk, { once: true }); else domOk();
+  // 2) Quando o painel responde: aplica as fotos atuais (ou as padrão, se o painel não tiver nenhuma)
+  window.DataStore.onReady(() => {
+    if (!applyHero(cachedHero())) applyHero(DEFAULT_HERO);
   });
 
   // ===== PREÇOS DOS PACOTES NA HOME (vêm do painel) =====
