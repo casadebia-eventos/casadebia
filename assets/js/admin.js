@@ -2136,4 +2136,57 @@ window.DataStore.onReady(function () {
 
   applyProfile();
   renderDashboard();
+
+  // ===== CELULAR: cartões grandes ficam recolhidos (só o título), toque para abrir =====
+  // Vale para Pacotes, Serviços, Balões e Brinquedos, Temas, Decoração inclusa e Galeria.
+  // No computador nada muda (o CSS só recolhe em telas até 700px).
+  (function mobileCompact() {
+    const openKeys = new Set();
+    const CARD_ROOTS = ['#pacotesRoot', '#servicosRoot', '#baloesRoot', '#themesRoot', '#promaxIncludedRoot'];
+    const keyOf = (el, i, rootSel) => rootSel + ':' + (el.querySelector('h3')?.textContent?.trim() || i);
+    const apply = () => {
+      CARD_ROOTS.forEach(sel => {
+        const root = document.querySelector(sel);
+        if (!root) return;
+        [...root.children].filter(c => c.classList.contains('admin-card')).forEach((card, i) => {
+          if (card.dataset.mReady) return;
+          const head = card.querySelector('.admin-card-header');
+          if (!head) return;
+          card.dataset.mReady = '1';
+          card.classList.add('m-collapsible');
+          const key = keyOf(card, i, sel);
+          if (openKeys.has(key)) card.classList.add('m-open');
+          const chev = document.createElement('span');
+          chev.className = 'm-chev';
+          chev.setAttribute('aria-hidden', 'true');
+          head.appendChild(chev);
+          head.addEventListener('click', (e) => {
+            if (e.target.closest('button, input, select, textarea, a, label')) return;
+            card.classList.toggle('m-open');
+            if (card.classList.contains('m-open')) openKeys.add(key); else openKeys.delete(key);
+          });
+        });
+      });
+      // Galeria: mostra a foto e a categoria; o resto abre em "Editar"
+      document.querySelectorAll('#galeriaRoot .media-card').forEach((card) => {
+        if (card.dataset.mReady) return;
+        card.dataset.mReady = '1';
+        const key = 'media:' + card.dataset.mediaIdx;
+        if (openKeys.has(key)) card.classList.add('m-open');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'm-edit-btn';
+        btn.textContent = card.classList.contains('m-open') ? 'Fechar' : 'Editar';
+        btn.addEventListener('click', () => {
+          card.classList.toggle('m-open');
+          const open = card.classList.contains('m-open');
+          btn.textContent = open ? 'Fechar' : 'Editar';
+          if (open) openKeys.add(key); else openKeys.delete(key);
+        });
+        card.querySelector('.media-fields')?.appendChild(btn);
+      });
+    };
+    new MutationObserver(apply).observe(document.querySelector('.admin-main') || document.body, { childList: true, subtree: true });
+    apply();
+  })();
 });
