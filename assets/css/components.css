@@ -401,6 +401,15 @@
   pointer-events: none;
 }
 .page-hero .container { position: relative; z-index: 1; }
+/* Logo da Casa de Bia atrás do título do topo (ex.: página Serviços) */
+.page-hero.page-hero-logo::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--navbar-height) + 8px) 0 8px;
+  background: url("../img/logo-clara.png") center / contain no-repeat;
+  opacity: 0.16;
+  pointer-events: none;
+}
 .page-hero h1 { margin-bottom: var(--space-4); }
 .page-hero p { color: var(--muted); font-size: var(--fs-md); max-width: 600px; margin: 0 auto; }
 
