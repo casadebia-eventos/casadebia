@@ -198,7 +198,7 @@
     package: null,         // 'basico' | 'essencial' | 'premium'
     guests: 0,
     gas: null,             // true | false | null
-    decoration: { enabled: null, type: null, combo: null, addons: [], balloon: null, theme: null },
+    decoration: { enabled: null, type: null, combo: null, addons: [], balloon: null, theme: null, toys: [] },
     services: {},
     date: '',
     customer: { name: '', whatsapp: '' }
@@ -261,6 +261,9 @@
     return Number(v) || 0;
   };
   const availableFor = (item, pkg) => priceFor(item, pkg) !== null;
+  // Brinquedos ficam cadastrados junto com os balões (painel → Balões, tipo "Brinquedo").
+  // Sem tipo marcado, o que tiver "brinquedo" no nome conta como brinquedo.
+  const isToy = (b) => !!b && (b.category === 'brinquedo' || (!b.category && /brinquedo/i.test(b.name || '')));
 
   // ===== CÁLCULO DO ORÇAMENTO =====
   const calculate = (state) => {
@@ -321,6 +324,15 @@
           total += priceFor(combo, state.package) || 0;
         }
       }
+
+      // Brinquedos (podem ser vários)
+      (state.decoration.toys || []).forEach(id => {
+        const t = (window.BALLOONS_DATA || []).find(b => b.id === id);
+        if (!t) return;
+        const v = priceFor(t, state.package) || 0;
+        items.push({ key: 'deco-toy-' + id, label: `Brinquedos: ${t.name}`, sub: 'Brinquedos', value: v });
+        total += v;
+      });
 
       // Balão personalizado
       if (state.decoration.balloon && window.BALLOONS_DATA) {
@@ -507,6 +519,7 @@
     calculate,
     priceFor,
     availableFor,
+    isToy,
     formatBRL,
     reset,
     STORAGE_KEY

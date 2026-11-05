@@ -421,6 +421,7 @@
       if (decoAddonsSection) decoAddonsSection.style.display = (decoActive && (state.decoration?.combo || hasRef() || isPremium())) ? '' : 'none';
       renderThemes();
       renderRefPhotos();
+      renderToys();
     };
 
     const renderDecorationYesNo = () => {
@@ -458,6 +459,10 @@
       // Balão marcado sozinho não vale em plano sem decoração inclusa
       if (d.balloonAuto && !window.SIM_PRICING.packages[state.package]?.includesDecoration) { d.balloon = null; d.balloonAuto = false; }
       if (d.theme && d.theme !== 'outro' && !themesForPlan().some(t => t.id === d.theme)) d.theme = null;
+      // Brinquedo que estava marcado como "balão" (cadastro antigo) passa para a lista de brinquedos
+      const balObj = d.balloon && (window.BALLOONS_DATA || []).find(b => b.id === d.balloon);
+      if (balObj && window.SIM.isToy(balObj)) { d.toys = d.toys || []; if (!d.toys.includes(balObj.id)) d.toys.push(balObj.id); d.balloon = null; d.balloonAuto = false; }
+      d.toys = (d.toys || []).filter(id => { const t = (window.BALLOONS_DATA || []).find(b => b.id === id); return t && window.SIM.availableFor(t, state.package); });
     };
 
     // ===== FOTO DE REFERÊNCIA DO CLIENTE (Cloudinary, opcional) =====
@@ -620,7 +625,7 @@
     // ===== BALÕES PERSONALIZADOS =====
     const renderBalloons = () => {
       if (!decoBalloonsGrid) return;
-      const balloons = (window.BALLOONS_DATA || []).filter(b => window.SIM.availableFor(b, state.package));
+      const balloons = (window.BALLOONS_DATA || []).filter(b => !window.SIM.isToy(b) && window.SIM.availableFor(b, state.package));
       if (!balloons.length) {
         decoBalloonsGrid.innerHTML = '<div class="deco-combo-empty">Nenhum modelo de balão cadastrado.</div>';
         return;
@@ -663,6 +668,47 @@
           });
         });
       });
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    // ===== BRINQUEDOS (seção própria, abaixo dos balões; pode marcar vários) =====
+    const toysList = () => (window.BALLOONS_DATA || []).filter(b => window.SIM.isToy(b) && window.SIM.availableFor(b, state.package));
+    const toggleToy = (id) => {
+      state.decoration.toys = state.decoration.toys || [];
+      const i = state.decoration.toys.indexOf(id);
+      if (i >= 0) state.decoration.toys.splice(i, 1); else state.decoration.toys.push(id);
+      window.SIM.save(state);
+      renderToys(); renderDecorationSummary(); renderBudget();
+    };
+    const renderToys = () => {
+      const sec = document.getElementById('decoToysSection');
+      const grid = document.getElementById('decoToys');
+      if (!sec || !grid) return;
+      const toys = toysList();
+      const decoActive = isPremium() || state.decoration?.enabled === true;
+      const show = toys.length > 0 && decoActive && !!(state.decoration?.combo || hasRef() || isPremium());
+      sec.style.display = show ? '' : 'none';
+      if (!show) return;
+      const sel = state.decoration?.toys || [];
+      grid.innerHTML = toys.map(b => `
+        <button class="balloon-card ${sel.includes(b.id) ? 'selected' : ''}" data-toy="${b.id}" type="button">
+          <img class="balloon-card-img" src="${(b.images && b.images[0]) || ''}" alt="${b.name}" loading="lazy">
+          <div class="balloon-card-body">
+            <span class="balloon-card-name">${b.name}</span>
+            <span class="balloon-card-desc">${b.shortDesc || ''}</span>
+            <div class="balloon-card-foot">
+              <span class="balloon-card-price">${window.SIM.formatBRL(window.SIM.priceFor(b, state.package))}</span>
+              <span class="balloon-card-view"><i data-lucide="zoom-in"></i>Ver detalhes</span>
+            </div>
+          </div>
+        </button>`).join('');
+      grid.querySelectorAll('[data-toy]').forEach(card => card.addEventListener('click', (ev) => {
+        const t = toys.find(x => x.id === card.dataset.toy);
+        if (!t) return;
+        if (!ev.target.closest('.balloon-card-view')) { toggleToy(t.id); return; }
+        openDetailModal({ kind: 'toy', id: t.id, title: t.name, price: window.SIM.priceFor(t, state.package),
+          description: t.description || t.shortDesc || '', images: t.images || [], selected: sel.includes(t.id) });
+      }));
       if (window.lucide) window.lucide.createIcons();
     };
 
@@ -776,6 +822,8 @@
         renderBalloons();
         renderDecorationSummary();
         renderBudget();
+      } else if (modalCtx.kind === 'toy') {
+        toggleToy(modalCtx.id);
       } else if (modalCtx.kind === 'combo') {
         state.decoration.combo = modalCtx.id;
         window.SIM.save(state);
@@ -831,7 +879,11 @@
         return sum + (a?.price || 0);
       }, 0);
       const balloon = state.decoration.balloon && (window.BALLOONS_DATA || []).find(b => b.id === state.decoration.balloon);
-      const total = (window.SIM.priceFor(combo, state.package) || 0) + addonsTotal + (window.SIM.priceFor(balloon, state.package) || 0);
+      const toysTotal = (state.decoration.toys || []).reduce((sum, id) => {
+        const t = (window.BALLOONS_DATA || []).find(b => b.id === id);
+        return sum + (window.SIM.priceFor(t, state.package) || 0);
+      }, 0);
+      const total = (window.SIM.priceFor(combo, state.package) || 0) + addonsTotal + (window.SIM.priceFor(balloon, state.package) || 0) + toysTotal;
       const addonsCount = (state.decoration.addons || []).length;
 
       decoSummary.style.display = '';
@@ -1468,6 +1520,10 @@
           const bal = window.BALLOONS_DATA.find(b => b.id === state.decoration.balloon);
           if (bal) rows.push({ strongLabel: 'Balões: ' + bal.name, label: 'Personalizado', value: window.SIM.formatBRL(window.SIM.priceFor(bal, state.package) || 0) });
         }
+        (state.decoration.toys || []).forEach(id => {
+          const t = (window.BALLOONS_DATA || []).find(b => b.id === id);
+          if (t) rows.push({ strongLabel: 'Brinquedos: ' + t.name, label: 'Brinquedos', value: window.SIM.formatBRL(window.SIM.priceFor(t, state.package) || 0) });
+        });
         (state.decoration.addons || []).forEach(id => {
           const a = DD.addons.find(x => x.id === id);
           if (a) rows.push({ label: a.name, sub: 'Adicional', value: window.SIM.formatBRL(a.price) });
@@ -1676,6 +1732,15 @@
         }
       }
 
+      // BRINQUEDOS
+      const toyLines = (state.decoration?.toys || []).map(id => (window.BALLOONS_DATA || []).find(b => b.id === id)).filter(Boolean)
+        .map(t => `• ${t.name} — ${fmt(window.SIM.priceFor(t, state.package) || 0)}`);
+      if (toyLines.length) {
+        lines.push('🧸 *Brinquedos*');
+        lines.push(...toyLines);
+        lines.push('');
+      }
+
       // ADICIONAIS DE DECORAÇÃO
       const addonLines = [];
       (state.decoration?.addons || []).forEach(id => {
@@ -1767,7 +1832,7 @@
       if (!d || d.enabled !== true || !d.combo || d.balloon) return;
       // Só nos planos que já incluem decoração (Premium/Pro Max). No Básico/Essencial segue sem balões.
       if (!window.SIM_PRICING.packages[state.package]?.includesDecoration) return;
-      const def = (window.BALLOONS_DATA || []).find(b => b.isDefault && window.SIM.availableFor(b, state.package));
+      const def = (window.BALLOONS_DATA || []).find(b => b.isDefault && !window.SIM.isToy(b) && window.SIM.availableFor(b, state.package));
       if (!def) return;
       d.balloon = def.id;
       d.balloonAuto = true;

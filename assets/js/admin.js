@@ -1615,7 +1615,12 @@ window.DataStore.onReady(function () {
             <input type="text" data-bal-field="name" value="${escapeHTML(b.name)}">
           </div>
           <div class="admin-field">
-            <label class="admin-check" style="display:flex;gap:8px;align-items:center;margin-top:28px;">
+            <label>Tipo</label>
+            <select data-bal-field="category">
+              <option value="balao" ${!(b.category === 'brinquedo' || (!b.category && /brinquedo/i.test(b.name || ''))) ? 'selected' : ''}>Balões</option>
+              <option value="brinquedo" ${(b.category === 'brinquedo' || (!b.category && /brinquedo/i.test(b.name || ''))) ? 'selected' : ''}>Brinquedos</option>
+            </select>
+            <label class="admin-check" style="display:flex;gap:8px;align-items:center;margin-top:12px;">
               <input type="checkbox" data-bal-default ${b.isDefault ? 'checked' : ''}>
               Balão padrão <small>(marcado sozinho no Premium/Pro Max se o cliente não escolher)</small>
             </label>
