@@ -1846,3 +1846,10 @@
   .deco-combo.selected::after { width: 26px; height: 26px; top: 8px; right: 8px; background-size: 15px; }
   .deco-ref-thumb { width: 52px; height: 52px; }
 }
+
+/* ===== Etapa 3: efeito de entrada ao rolar (igual à página inicial) ===== */
+.sim-reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease, border-color .25s ease, box-shadow .25s ease; }
+.sim-reveal.visible { opacity: 1; transform: none; }
+.sim-reveal.no-anim { transition: none !important; }
+.deco-combo.sim-reveal.visible:hover { transform: translateY(-4px); }
+@media (max-width: 639px) { .deco-combo.sim-reveal.visible:hover { transform: none; } }

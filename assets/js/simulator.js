@@ -1966,5 +1966,44 @@
     };
 
     renderAll();
+
+    // ===== EFEITO DE ENTRADA NA ETAPA 3 (só visual) =====
+    // Seções e cards sobem e aparecem suavemente ao rolar, como na página inicial.
+    // O que já apareceu uma vez não anima de novo (ex.: ao tocar num combo a lista é redesenhada).
+    (function decoReveal() {
+      const step = document.querySelector('.sim-step[data-step="3"]');
+      if (!step || !('IntersectionObserver' in window)) return;
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const seen = new Set();
+      const keyOf = (el) => {
+        if (el.classList.contains('deco-section')) return 'sec:' + (el.id || '');
+        const d = el.dataset;
+        return 'card:' + (d.combo || d.balloon || d.toy || d.theme || d.addon || el.id || '');
+      };
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          e.target.classList.add('visible');
+          seen.add(keyOf(e.target));
+          const t = e.target; setTimeout(() => { t.style.transitionDelay = ''; }, 900);
+          io.unobserve(e.target);
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+      const SEL = '.deco-section, .deco-combo, .balloon-card, .deco-theme-card, .deco-addon';
+      const prepare = (root) => {
+        root.querySelectorAll(SEL).forEach((el) => {
+          if (el.classList.contains('sim-reveal')) return;
+          const k = keyOf(el);
+          el.classList.add('sim-reveal');
+          if (seen.has(k)) { el.classList.add('visible', 'no-anim'); return; }
+          // cards lado a lado entram um pouquinho depois do vizinho
+          const idx = el.parentElement ? [...el.parentElement.children].indexOf(el) : 0;
+          if (!el.classList.contains('deco-section')) el.style.transitionDelay = ((idx % 2) * 0.08) + 's';
+          io.observe(el);
+        });
+      };
+      prepare(step);
+      new MutationObserver(() => prepare(step)).observe(step, { childList: true, subtree: true });
+    })();
   });
 })();
